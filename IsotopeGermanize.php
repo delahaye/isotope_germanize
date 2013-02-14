@@ -22,6 +22,108 @@
  */
 class IsotopeGermanize extends IsotopeFrontend
 {
+
+    protected static $arrEuCountries = array('at', 'be', 'bg', 'cy', 'cz', 'de', 'dk', 'es', 'fi', 'fr', 'gb', 'gr', 'hu', 'ie', 'it', 'je', 'lt', 'lu', 'lv', 'mt', 'nl', 'pl', 'pt', 'ro', 'se', 'si', 'sk');
+
+
+    public static function isActive()
+    {
+        return (bool) Isotope::getInstance()->Config->germanize;
+    }
+
+    public static function isOnCheckoutPage()
+    {
+        global $objPage;
+
+        $arrPages = deserialize(Isotope::getInstance()->Config->checkoutPages, true);
+
+        return in_array($objPage->id, $arrPages);
+    }
+
+    /**
+     * Return true if user is in germany or country is unknown
+     * @return bool
+     */
+    public static function isGermany()
+    {
+        $strCountry = Isotope::getInstance()->Cart->shippingAddress->country;
+
+        return ($strCountry == 'de' || $strCountry == '');
+    }
+
+    public static function isEuropeanUnion()
+    {
+        return in_array(Isotope::getInstance()->Cart->shippingAddress->country, self::$arrEuCountries);
+    }
+
+    public static function hasNetPriceGroup()
+    {
+        if (FE_USER_LOGGED_IN !== true) {
+            return false;
+        }
+
+        $arrUserGroups = FrontendUser::getInstance()->groups;
+        $arrNetGroups = deserialize(Isotope::getInstance()->Config->netPriceGroups);
+
+        if (!is_array($arrUserGroups) || !is_array($arrNetGroups)) {
+            return false;
+        }
+
+        return count(array_intersect($arrUserGroups, $arrNetGroups)) > 0;
+    }
+
+    public static function hasVatNo()
+    {
+        return Isotope::getInstance()->Cart->shippingAddress->vat_no != '';
+    }
+
+    public static function hasValidVatNo()
+    {
+        if (!self::hasVatNo()) {
+            return false;
+        }
+
+        // TODO: implement VAT check here
+
+        return true;
+    }
+
+    public static function hasTaxFreePrices()
+    {
+        $blnGuestCheck = (FE_USER_LOGGED_IN === true || self::isOnCheckoutPage());
+
+        // Situation 1
+        if ($blnGuestCheck && !self::isEuropeanUnion()) {
+            return true;
+        }
+
+        // Situation 2
+        if ($blnGuestCheck && self::isEuropeanUnion() && !self::isGermany() && self::hasValidVatNo()) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public static function hasNetPrices()
+    {
+        if (self::hasTaxFreePrices() || !self::hasNetPriceGroup()) {
+            return false;
+        }
+
+        if (!self::isOnCheckoutPage() || self::isEuropeanUnion()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function hasGrossPrices()
+    {
+        return (!self::hasTaxFreePrices() && !self::hasNetPrices());
+    }
+
 	/**
 	 * Inject notes in default templates and set certain variables
 	 * @param string
