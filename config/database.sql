@@ -25,6 +25,19 @@ CREATE TABLE `tl_iso_config` (
   `groupsVatCheck` blob NULL,
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- Table `tl_iso_tax_class`
+--
+
+CREATE TABLE `tl_iso_tax_class` (
+  `germanize_price` varchar(5) NOT NULL default ''
+  `germanize_rate` varchar(9) NOT NULL default ''
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
 --
 -- Table `tl_iso_tax_rate`
 --
