@@ -1,35 +1,69 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * Contao Open Source CMS
- * Copyright (C) 2005-2010 Leo Feyer
+ * Provides several functionality for German shops:
+ * VAT-handling, gross- and net-prices, tax-notes at several places
  *
- * Formerly known as TYPOlight Open Source CMS.
+ * This extension depends on the Contao-Extension Isotope eCommerce
  *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at <http://www.gnu.org/licenses/>.
- *
- * PHP version 5
- * @copyright  Isotope eCommerce Workgroup 2009-2012
+ * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
- * @license    http://opensource.org/licenses/lgpl-3.0.html
+ * @package    isotope_germanize
+ * @license    LGPL 
+ * @filesource
  */
+
+
+/**
+ * EU countries
+ */
+
+$GLOBALS['iso_germanize']['eu'] = array(
+	'at',
+	'be',
+	'bg',
+	'cy',
+	'cz',
+	'de',
+	'dk',
+	'es',
+	'fi',
+	'fr',
+	'gb',
+	'gr',
+	'hu',
+	'ie',
+	'it',
+	'je',
+	'lt',
+	'lu',
+	'lv',
+	'mt',
+	'nl',
+	'pl',
+	'pt',
+	'ro',
+	'se',
+	'si',
+	'sk'
+	);
+
+
+/**
+ * Data relevant for re-checking the VAT-Id
+ */
+
+$GLOBALS['iso_germanize']['relevantData'] = array('vat_no','company','street_1','postal','city','country');
 
 
 /**
  * Hooks
  */
 
-$GLOBALS['TL_HOOKS']['parseFrontendTemplate'][] 	= array('IsotopeGermanize', 'injectNotes');
-$GLOBALS['TL_HOOKS']['replaceInsertTags'][] 		= array('IsotopeGermanize', 'isotopeGermanizeInsertTags');
+$GLOBALS['ISO_HOOKS']['force2TaxRate'][] = array('IsotopeGermanize', 'handleVat');
+$GLOBALS['ISO_HOOKS']['addCustomAddress'][] = array('IsotopeGermanize','setVatStatus');
+
+$GLOBALS['TL_HOOKS']['parseFrontendTemplate'][] = array('IsotopeGermanize', 'injectNotes');
+$GLOBALS['TL_HOOKS']['replaceInsertTags'][]     = array('IsotopeGermanize', 'isotopeGermanizeInsertTags');
+// experimental: $GLOBALS['ISO_HOOKS']['checkVatNo'][] = array('IsotopeVatId_Bff', 'checkIt');
+$GLOBALS['ISO_HOOKS']['checkVatNo'][]           = array('IsotopeVatId_Vatideu', 'checkIt');

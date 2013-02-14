@@ -1,43 +1,37 @@
 <?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
 
 /**
- * Contao Open Source CMS
- * Copyright (C) 2005-2010 Leo Feyer
+ * Provides several functionality for German shops:
+ * VAT-handling, gross- and net-prices, tax-notes at several places
  *
- * Formerly known as TYPOlight Open Source CMS.
+ * This extension depends on the Contao-Extension Isotope eCommerce
  *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at <http://www.gnu.org/licenses/>.
- *
- * PHP version 5
- * @copyright  Isotope eCommerce Workgroup 2009-2012
+ * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
- * @license    http://opensource.org/licenses/lgpl-3.0.html
+ * @package    isotope_germanize
+ * @license    LGPL 
+ * @filesource
  */
 
 
 /**
  * Fields
  */
+ 
+$GLOBALS['TL_LANG']['tl_iso_config']['pageShipping']       = array('Seite mit den Versandkosten', 'Wählen Sie die Seite aus, die Angaben zu den Versandkosten enthält.');
+$GLOBALS['TL_LANG']['tl_iso_config']['shippingTarget']     = array('In neuem Fenster öffnen', 'Den Link in einem neuen Browserfenster öffnen.');
+$GLOBALS['TL_LANG']['tl_iso_config']['shippingRel']        = array('Lightbox', 'Hier können Sie ein rel-Attribut eingeben, um die Lightbox anzusteuern.');
 
-$GLOBALS['TL_LANG']['tl_iso_config']['pricenote']   	= array('Artikel mit Preis-Informationen', 'Wählen Sie den Artikel aus, der die am Produktpreis sichtbaren Versand- und MwSt-Informationen enthält.');
-$GLOBALS['TL_LANG']['tl_iso_config']['shippingnote']   	= array('Artikel mit Versandkostenhinweis im Warenkorb', 'Wählen Sie den Artikel aus, der die im Warenkorb sichtbaren Hinweise zu Versandkosten enthält.');
-$GLOBALS['TL_LANG']['tl_iso_config']['orderbutton'] 	= array('Bestell-Button (Wert=Sprache)', 'Legen Sie die Beschriftung des Bestell-Buttons in den einzelnen Sprachen fest.');
+$GLOBALS['TL_LANG']['tl_iso_config']['shippingNote']       = array('Artikel mit Versandkostenhinweis im Warenkorb', 'Wählen Sie den Artikel aus, der die im Warenkorb sichtbaren Hinweise zu Versandkosten enthält.');
+
+$GLOBALS['TL_LANG']['tl_iso_config']['manualVatCheck']     = array('USt-ID-Prüfung nur manuell','Die Freigabe der USt-ID Nr. erfolgt ausschließlich manuell im Backend.');
+$GLOBALS['TL_LANG']['tl_iso_config']['checkoutPages']      = array('Kassenseiten','Auf Kassenseiten sehen auch Gäste ggf. Nettopreise aufgrund Ihrer Landeszuordnung bzw. USt-ID Nr..');
+$GLOBALS['TL_LANG']['tl_iso_config']['onlyMemberVatCheck'] = array('USt-ID-Prüfung nur für Mitglieder','Es sind keine USt.-freien Einkäufe für Gäste mit USt-ID möglich.');
+$GLOBALS['TL_LANG']['tl_iso_config']['groupsVatCheck']     = array('Mitgliedergruppen mit USt-ID Überprüfung','Für Mitglieder dieser Gruppen wird die USt-iD automatisiert geprüft.');
 
 
 /**
  * Legends
  */
 
-$GLOBALS['TL_LANG']['tl_iso_config']['germanize_legend'] = 'German settings';
+$GLOBALS['TL_LANG']['tl_iso_config']['germanize_legend']   = 'Einstellungen für deutsche Shops';

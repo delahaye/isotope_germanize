@@ -1,29 +1,16 @@
 <?php if (!defined('TL_ROOT')) die('You can not access this file directly!');
 
 /**
- * Contao Open Source CMS
- * Copyright (C) 2005-2010 Leo Feyer
+ * Provides several functionality for German shops:
+ * VAT-handling, gross- and net-prices, tax-notes at several places
  *
- * Formerly known as TYPOlight Open Source CMS.
+ * This extension depends on the Contao-Extension Isotope eCommerce
  *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program. If not, please visit the Free
- * Software Foundation website at <http://www.gnu.org/licenses/>.
- *
- * PHP version 5
- * @copyright  Isotope eCommerce Workgroup 2009-2012
+ * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
- * @license    http://opensource.org/licenses/lgpl-3.0.html
+ * @package    isotope_germanize
+ * @license    LGPL 
+ * @filesource
  */
 
 
@@ -31,48 +18,93 @@
  * Modify palettes
  */
 
-$GLOBALS['TL_DCA']['tl_iso_config']['palettes']['default'] .= ';{germanize_legend:hide},pricenote,shippingnote,orderbutton';
+$GLOBALS['TL_DCA']['tl_iso_config']['palettes']['__selector__'][] = 'onlyMemberVatCheck';
+
+$GLOBALS['TL_DCA']['tl_iso_config']['palettes']['default'] .= ';{germanize_legend:hide},pageShipping,shippingRel,shippingTarget,shippingNote,checkoutPages,manualVatCheck,onlyMemberVatCheck';
+
+$GLOBALS['TL_DCA']['tl_iso_config']['subpalettes']['onlyMemberVatCheck'] .= 'groupsVatCheck';
 
 
 /**
  * Add fields
  */
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['pricenote'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shippingNote'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['pricenote'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shippingNote'],
 	'exclude'                 => true,
 	'inputType'               => 'select',
-	'options_callback'        => array('tl_iso_germanize', 'getArticleAlias'),
-	'eval'                    => array('mandatory'=>false)
+	'options_callback'        => array('tl_iso_config_germanize', 'getArticleAlias'),
+	'eval'                    => array('mandatory'=>false, 'tl_class'=>'clr')
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shippingnote'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['pageShipping'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shippingnote'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['pageShipping'],
 	'exclude'                 => true,
-	'inputType'               => 'select',
-	'options_callback'        => array('tl_iso_germanize', 'getArticleAlias'),
-	'eval'                    => array('mandatory'=>false)
+	'inputType'               => 'pageTree',
+	'eval'                    => array('fieldType'=>'radio')
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['orderbutton'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shippingTarget'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['orderbutton'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shippingTarget'],
 	'exclude'                 => true,
-	'inputType'               => 'optionWizard',
-	'eval'                    => array('mandatory'=>false)
+	'inputType'               => 'checkbox',
+	'eval'                    => array('tl_class'=>'w50 m12')
 );
+
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shippingRel'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shippingRel'],
+	'exclude'                 => true,
+	'search'                  => true,
+	'inputType'               => 'text',
+	'eval'                    => array('maxlength'=>64, 'tl_class'=>'w50')
+);
+
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['checkoutPages'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['checkoutPages'],
+	'exclude'                 => true,
+	'inputType'               => 'pageTree',
+	'eval'                    => array('fieldType'=>'checkbox')
+);
+
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['manualVatCheck'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['manualVatCheck'],
+	'exclude'                 => true,
+	'inputType'               => 'checkbox'
+);
+
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['onlyMemberVatCheck'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['onlyMemberVatCheck'],
+	'exclude'                 => true,
+	'inputType'               => 'checkbox',
+	'eval'                    => array('submitOnChange'=>true)
+);
+
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['groupsVatCheck'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['groupsVatCheck'],
+	'exclude'                 => true,
+	'filter'                  => true,
+	'inputType'               => 'checkboxWizard',
+	'foreignKey'              => 'tl_member_group.name',
+	'eval'                    => array('multiple'=>true)
+);
+
 
 
 /**
- * Class tl_iso_germanize
- * 
- * Provide additional methods for DCA.
- * @copyright  Isotope eCommerce Workgroup 2009-2012
+ * Adds backend functionality
+ *
+ * @package	   isotope_germanize
  * @author     Christian de la Haye <service@delahaye.de>
  */
-class tl_iso_germanize extends Backend
+class tl_iso_config_germanize extends Backend
 {
 
 	/**
