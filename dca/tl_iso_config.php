@@ -9,7 +9,7 @@
  * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
  * @package    isotope_germanize
- * @license    LGPL 
+ * @license    LGPL
  * @filesource
  */
 
@@ -17,17 +17,25 @@
 /**
  * Modify palettes
  */
-
+$GLOBALS['TL_DCA']['tl_iso_config']['palettes']['__selector__'][] = 'germanize';
 $GLOBALS['TL_DCA']['tl_iso_config']['palettes']['__selector__'][] = 'onlyMemberVatCheck';
 
-$GLOBALS['TL_DCA']['tl_iso_config']['palettes']['default'] .= ';{germanize_legend:hide},pageShipping,shippingRel,shippingTarget,shippingNote,checkoutPages,manualVatCheck,onlyMemberVatCheck';
+$GLOBALS['TL_DCA']['tl_iso_config']['palettes']['default'] .= ';{germanize_legend:hide},germanize';
 
+$GLOBALS['TL_DCA']['tl_iso_config']['subpalettes']['germanize'] .= 'pageShipping,shippingRel,shippingTarget,shippingNote,checkoutPages,netPriceGroups,manualVatCheck,onlyMemberVatCheck';
 $GLOBALS['TL_DCA']['tl_iso_config']['subpalettes']['onlyMemberVatCheck'] .= 'groupsVatCheck';
 
 
 /**
  * Add fields
  */
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['germanize'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['germanize'],
+	'exclude'                 => true,
+	'inputType'               => 'checkbox',
+	'eval'                    => array('submitOnChange'=>true, 'tl_class'=>'clr')
+);
 
 $GLOBALS['TL_DCA']['tl_iso_config']['fields']['shippingNote'] = array
 (
@@ -69,6 +77,15 @@ $GLOBALS['TL_DCA']['tl_iso_config']['fields']['checkoutPages'] = array
 	'exclude'                 => true,
 	'inputType'               => 'pageTree',
 	'eval'                    => array('fieldType'=>'checkbox')
+);
+
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['netPriceGroups'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['netPriceGroups'],
+	'exclude'                 => true,
+	'inputType'               => 'checkbox',
+	'foreignKey'              => 'tl_member_group.name',
+	'eval'                    => array('multiple'=>true, 'tl_class'=>'clr'),
 );
 
 $GLOBALS['TL_DCA']['tl_iso_config']['fields']['manualVatCheck'] = array

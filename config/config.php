@@ -9,7 +9,7 @@
  * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
  * @package    isotope_germanize
- * @license    LGPL 
+ * @license    LGPL
  * @filesource
  */
 
@@ -59,8 +59,9 @@ $GLOBALS['iso_germanize']['relevantData'] = array('vat_no','company','street_1',
 /**
  * Hooks
  */
+$GLOBALS['ISO_HOOKS']['calculateTax'][] = array('IsotopeGermanize', 'calculateTax');
 
-$GLOBALS['ISO_HOOKS']['force2TaxRate'][] = array('IsotopeGermanize', 'handleVat');
+//    $GLOBALS['ISO_HOOKS']['force2TaxRate'][] = array('IsotopeGermanize', 'handleVat');
 $GLOBALS['ISO_HOOKS']['addCustomAddress'][] = array('IsotopeGermanize','setVatStatus');
 
 $GLOBALS['TL_HOOKS']['parseFrontendTemplate'][] = array('IsotopeGermanize', 'injectNotes');
