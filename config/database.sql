@@ -1,13 +1,15 @@
---
--- Table `tl_iso_setup`
---
+-- **********************************************************
+-- *                                                        *
+-- * IMPORTANT NOTE                                         *
+-- *                                                        *
+-- * Do not import this file manually but use the Contao    *
+-- * install tool to create and maintain database tables!   *
+-- *                                                        *
+-- **********************************************************
 
-CREATE TABLE `tl_iso_tax_rate` (
-  `excludeFromVatHandling` char(1) NOT NULL default ''
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
--- Table `tl_iso_setup`
+-- Table `tl_iso_config`
 --
 
 CREATE TABLE `tl_iso_config` (
@@ -21,15 +23,26 @@ CREATE TABLE `tl_iso_config` (
   `groupsVatCheck` blob NULL,
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+--
+-- Table `tl_iso_tax_rate`
+--
 
--- 
+CREATE TABLE `tl_iso_tax_rate` (
+  `excludeFromVatHandling` char(1) NOT NULL default ''
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table `tl_iso_addresses`
--- 
+--
 
 CREATE TABLE `tl_iso_addresses` (
   `vat_no_confirmed` char(1) NOT NULL default '',
   `vat_no_check` text NULL,
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
 
 --
 -- Table `tl_member`

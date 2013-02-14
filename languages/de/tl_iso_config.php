@@ -9,7 +9,7 @@
  * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
  * @package    isotope_germanize
- * @license    LGPL 
+ * @license    LGPL
  * @filesource
  */
 
@@ -17,7 +17,7 @@
 /**
  * Fields
  */
- 
+
 $GLOBALS['TL_LANG']['tl_iso_config']['pageShipping']       = array('Seite mit den Versandkosten', 'Wählen Sie die Seite aus, die Angaben zu den Versandkosten enthält.');
 $GLOBALS['TL_LANG']['tl_iso_config']['shippingTarget']     = array('In neuem Fenster öffnen', 'Den Link in einem neuen Browserfenster öffnen.');
 $GLOBALS['TL_LANG']['tl_iso_config']['shippingRel']        = array('Lightbox', 'Hier können Sie ein rel-Attribut eingeben, um die Lightbox anzusteuern.');
@@ -33,5 +33,4 @@ $GLOBALS['TL_LANG']['tl_iso_config']['groupsVatCheck']     = array('Mitgliedergr
 /**
  * Legends
  */
-
 $GLOBALS['TL_LANG']['tl_iso_config']['germanize_legend']   = 'Einstellungen für deutsche Shops';

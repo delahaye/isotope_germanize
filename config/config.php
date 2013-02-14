@@ -9,7 +9,7 @@
  * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
  * @package    isotope_germanize
- * @license    LGPL 
+ * @license    LGPL
  * @filesource
  */
 

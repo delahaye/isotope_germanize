@@ -9,7 +9,7 @@
  * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
  * @package    isotope_germanize
- * @license    LGPL 
+ * @license    LGPL
  * @filesource
  */
 
@@ -17,7 +17,6 @@
 /**
  * Modify palettes
  */
-
 $GLOBALS['TL_DCA']['tl_iso_config']['palettes']['__selector__'][] = 'onlyMemberVatCheck';
 
 $GLOBALS['TL_DCA']['tl_iso_config']['palettes']['default'] .= ';{germanize_legend:hide},pageShipping,shippingRel,shippingTarget,shippingNote,checkoutPages,manualVatCheck,onlyMemberVatCheck';
