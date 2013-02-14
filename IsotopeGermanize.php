@@ -124,6 +124,62 @@ class IsotopeGermanize extends IsotopeFrontend
         return (!self::hasTaxFreePrices() && !self::hasNetPrices());
     }
 
+
+    public static function getTaxNotice()
+    {
+        $objAddress = Isotope::getInstance()->Cart->shippingAddress;
+        $arrCountries = Isotope::getInstance()->call('getCountries');
+        $strCountry = $arrCountries[$objAddress->country];
+
+        $b = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEuGuest'], $strCountry);
+        $c = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEu'], $strCountry);
+        $d = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['confirmedVatNo'], $objAddress->vat_no);
+        $e = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['unconfirmedVatNo'], $objAddress->vat_no, $strCountry);
+        $f = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['noVatNo'], $strCountry);
+
+        if (self::isGermany()) {
+            return '';
+        }
+
+        if (!self::isOnCheckoutPage()) {
+
+            if (FE_USER_LOGGED_IN === true && !self::isEuropeanUnion()) {
+                return $c;
+            } elseif (FE_USER_LOGGED_IN === true && self::isEuropeanUnion() && self::hasValidVatNo()) {
+                return $d;
+            } elseif (self::hasNetPriceGroup()) {
+
+                if (self::isEuropeanUnion() && self::hasVatNo() && !self::hasValidVatNo()) {
+                    return $e;
+                } else {
+                    return $b;
+                }
+
+            } elseif (self::isEuropeanUnion()) {
+                return $f;
+            } else {
+                return $b;
+            }
+
+        } else {
+
+            if (!self::isEuropeanUnion()) {
+                return $c;
+            } elseif (self::isEuropeanUnion() && self::hasValidVatNo()) {
+                return $d;
+            } elseif (self::isEuropeanUnion() && self::hasVatNo()) {
+                return $e;
+            } else {
+                return '';
+            }
+        }
+    }
+
+
+
+
+
+
 	/**
 	 * Inject notes in default templates and set certain variables
 	 * @param string

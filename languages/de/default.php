@@ -33,6 +33,7 @@ $GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEuGuest']        = 'Die Preise
 $GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEu']             = 'Als Lieferung an einen Leistungsempfänger in dem nicht-EU-Land %s ist der Umsatz nicht steuerbar. Es wird daher keine MwSt. berechnet.';
 $GLOBALS['TL_LANG']['iso_germanize']['notes']['confirmedVatNo']    = 'Die USt.-Id %s ist bestätigt. Der Leistungsempfänger entspricht der Lieferadresse, daher wird bei dieser innergemeinschaftlichen Leistung keine MwSt in Rechnung gestellt.';
 $GLOBALS['TL_LANG']['iso_germanize']['notes']['unconfirmedVatNo']  = 'Die USt.-Id %s wurde bisher leider noch nicht bestätigt. Daher wird unabhängig davon in das Lieferland %s inkl. MwSt. berechnet.';
+$GLOBALS['TL_LANG']['iso_germanize']['notes']['noVatNo']           = 'Die Preise werden unabhängig vom Lieferland %s inkl. MwSt. angezeigt. Geben Sie bei der Bestellung eine gültige USt.-Id. an, wird entsprechend einer innergemeinschaftlichen Leistung keine MwSt in Rechnung gestellt.';
 
 /**
  * VAT-Id check legends
