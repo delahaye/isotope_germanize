@@ -124,6 +124,105 @@ class IsotopeGermanize extends IsotopeFrontend
         return (!self::hasTaxFreePrices() && !self::hasNetPrices());
     }
 
+    public static function getTaxPercentForRate($strRate)
+    {
+        switch ($strRate)
+        {
+            case 'regular':
+                return 19;
+
+            case 'reduced':
+                return 7;
+
+            case 'excepted':
+                return 0;
+
+            default:
+                throw new InvalidArgumentException('Unknown german tax rate "' . $strRate . '"');
+        }
+    }
+
+    /**
+     * Overwrite the default Isotope tax calculation if german store config is active
+     * @param  Database_Result
+     * @param  float
+     * @param  bool
+     * @param  array
+     * @return mixed
+     */
+    public function calculateTax($objTaxClass, $fltPrice, $blnAdd, $arrAddresses)
+    {
+        // Trigger default tax calculation
+        if (!IsotopeGermanize::isActive()) {
+            return false;
+        }
+
+        // Calculate a product price (add or remove tax)
+        if (!$blnAdd) {
+
+            if ($objTaxClass->germanize_price == 'gross' && (self::hasTaxFreePrices() || self::hasNetPrices())) {
+
+                return $fltPrice - $this->calculateTaxIncluded($fltPrice, $objTaxClass->germanize_rate);
+
+            } elseif ($objTaxClass->germanize_price == 'net' && self::hasGrossPrices()) {
+
+                return $fltPrice + $this->calculateTaxSurcharge($fltPrice, $objTaxClass->germanize_rate);
+
+            }
+
+            return $fltPrice;
+        }
+
+        // Calculate tax surcharges
+        else {
+
+            if (self::hasNetPrices()) {
+
+                $strPercent = $this->getTaxPercentForRate($objTaxClass->germanize_rate);
+                $fltTax = $this->calculateTaxSurcharge($fltPrice, $objTaxClass->germanize_rate);
+
+                return array($objTaxClass->id => array
+    			(
+    				'label'			=> 'Steuer hinzu', //$this->translate($objRates->label ? $objRates->label : $objRates->name),
+    				'price'			=> $strPercent . '%',
+    				'total_price'	=> Isotope::getInstance()->roundPrice($fltTax, $objTaxClass->applyRoundingIncrement),
+    				'add'			=> true,
+    			));
+
+    		} elseif (self::hasGrossPrices()) {
+
+    		    $strPercent = $this->getTaxPercentForRate($objTaxClass->germanize_rate);
+    		    $fltTax = $this->calculateTaxIncluded($fltPrice, $objTaxClass->germanize_rate);
+
+        		return array($objTaxClass->id => array
+    			(
+    				'label'			=> 'Steuer enthalten', //$this->translate($objRates->label ? $objRates->label : $objRates->name),
+    				'price'			=> $strPercent . '%',
+    				'total_price'	=> Isotope::getInstance()->roundPrice($fltTax, $objTaxClass->applyRoundingIncrement),
+    				'add'			=> false,
+    			));
+
+    		}
+
+    		return array();
+        }
+    }
+
+
+    protected function calculateTaxIncluded($fltPrice, $strRate)
+    {
+        $intPercent = self::getTaxPercentForRate($strRate);
+
+        return $fltPrice - ($fltPrice / (1 + ($intPercent / 100)));
+    }
+
+    protected function calculateTaxSurcharge($fltPrice, $strRate)
+    {
+        $intPercent = self::getTaxPercentForRate($strRate);
+
+        return ($fltPrice * (1 + ($intPercent / 100))) - $fltPrice;
+    }
+
 
     public static function getTaxNotice()
     {
