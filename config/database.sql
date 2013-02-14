@@ -13,11 +13,13 @@
 --
 
 CREATE TABLE `tl_iso_config` (
+  `germanize` char(1) NOT NULL default '',
   `shippingNote` int(10) unsigned NOT NULL default '0',
   `pageShipping` int(10) unsigned NOT NULL default '0',
   `shippingTarget` char(1) NOT NULL default '',
   `shippingRel` varchar(255) NOT NULL default '',
   `checkoutPages` blob NULL,
+  `netPriceGroups` blob NULL,
   `manualVatCheck` char(1) NOT NULL default '',
   `onlyMemberVatCheck` char(1) NOT NULL default '',
   `groupsVatCheck` blob NULL,
