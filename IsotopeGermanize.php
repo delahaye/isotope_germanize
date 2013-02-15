@@ -9,7 +9,7 @@
  * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
  * @package    isotope_germanize
- * @license    LGPL 
+ * @license    LGPL
  * @filesource
  */
 
@@ -22,6 +22,263 @@
  */
 class IsotopeGermanize extends IsotopeFrontend
 {
+
+    protected static $arrEuCountries = array('at', 'be', 'bg', 'cy', 'cz', 'de', 'dk', 'es', 'fi', 'fr', 'gb', 'gr', 'hu', 'ie', 'it', 'je', 'lt', 'lu', 'lv', 'mt', 'nl', 'pl', 'pt', 'ro', 'se', 'si', 'sk');
+
+
+    public static function isActive()
+    {
+        return (bool) Isotope::getInstance()->Config->germanize;
+    }
+
+    public static function isOnCheckoutPage()
+    {
+        global $objPage;
+
+        $arrPages = deserialize(Isotope::getInstance()->Config->checkoutPages, true);
+
+        return in_array($objPage->id, $arrPages);
+    }
+
+    /**
+     * Return true if user is in germany or country is unknown
+     * @return bool
+     */
+    public static function isGermany()
+    {
+        $strCountry = Isotope::getInstance()->Cart->shippingAddress->country;
+
+        return ($strCountry == 'de' || $strCountry == '');
+    }
+
+    public static function isEuropeanUnion()
+    {
+        return in_array(Isotope::getInstance()->Cart->shippingAddress->country, self::$arrEuCountries);
+    }
+
+    public static function hasNetPriceGroup()
+    {
+        if (FE_USER_LOGGED_IN !== true) {
+            return false;
+        }
+
+        $arrUserGroups = FrontendUser::getInstance()->groups;
+        $arrNetGroups = deserialize(Isotope::getInstance()->Config->netPriceGroups);
+
+        if (!is_array($arrUserGroups) || !is_array($arrNetGroups)) {
+            return false;
+        }
+
+        return count(array_intersect($arrUserGroups, $arrNetGroups)) > 0;
+    }
+
+    public static function hasVatNo()
+    {
+        return Isotope::getInstance()->Cart->shippingAddress->vat_no != '';
+    }
+
+    public static function hasValidVatNo()
+    {
+        if (!self::hasVatNo()) {
+            return false;
+        }
+
+        // TODO: implement VAT check here
+
+        return true;
+    }
+
+    public static function hasTaxFreePrices()
+    {
+        $blnGuestCheck = (FE_USER_LOGGED_IN === true || self::isOnCheckoutPage());
+
+        // Situation 1
+        if ($blnGuestCheck && !self::isEuropeanUnion()) {
+            return true;
+        }
+
+        // Situation 2
+        if ($blnGuestCheck && self::isEuropeanUnion() && !self::isGermany() && self::hasValidVatNo()) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public static function hasNetPrices()
+    {
+        if (self::hasTaxFreePrices() || !self::hasNetPriceGroup()) {
+            return false;
+        }
+
+        if (!self::isOnCheckoutPage() || self::isEuropeanUnion()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function hasGrossPrices()
+    {
+        return (!self::hasTaxFreePrices() && !self::hasNetPrices());
+    }
+
+    public static function getTaxPercentForRate($strRate)
+    {
+        switch ($strRate)
+        {
+            case 'regular':
+                return 19;
+
+            case 'reduced':
+                return 7;
+
+            case 'excepted':
+                return 0;
+
+            default:
+                throw new InvalidArgumentException('Unknown german tax rate "' . $strRate . '"');
+        }
+    }
+
+    /**
+     * Overwrite the default Isotope tax calculation if german store config is active
+     * @param  Database_Result
+     * @param  float
+     * @param  bool
+     * @param  array
+     * @return mixed
+     */
+    public function calculateTax($objTaxClass, $fltPrice, $blnAdd, $arrAddresses)
+    {
+        // Trigger default tax calculation
+        if (!IsotopeGermanize::isActive()) {
+            return false;
+        }
+
+        // Calculate a product price (add or remove tax)
+        if (!$blnAdd) {
+
+            if ($objTaxClass->germanize_price == 'gross' && (self::hasTaxFreePrices() || self::hasNetPrices())) {
+
+                return $fltPrice - $this->calculateTaxIncluded($fltPrice, $objTaxClass->germanize_rate);
+
+            } elseif ($objTaxClass->germanize_price == 'net' && self::hasGrossPrices()) {
+
+                return $fltPrice + $this->calculateTaxSurcharge($fltPrice, $objTaxClass->germanize_rate);
+
+            }
+
+            return $fltPrice;
+        }
+
+        // Calculate tax surcharges
+        else {
+
+            if (self::hasNetPrices()) {
+
+                $strPercent = $this->getTaxPercentForRate($objTaxClass->germanize_rate);
+                $fltTax = $this->calculateTaxSurcharge($fltPrice, $objTaxClass->germanize_rate);
+
+                return array($objTaxClass->id => array
+    			(
+    				'label'			=> 'Steuer hinzu', //$this->translate($objRates->label ? $objRates->label : $objRates->name),
+    				'price'			=> $strPercent . '%',
+    				'total_price'	=> Isotope::getInstance()->roundPrice($fltTax, $objTaxClass->applyRoundingIncrement),
+    				'add'			=> true,
+    			));
+
+    		} elseif (self::hasGrossPrices()) {
+
+    		    $strPercent = $this->getTaxPercentForRate($objTaxClass->germanize_rate);
+    		    $fltTax = $this->calculateTaxIncluded($fltPrice, $objTaxClass->germanize_rate);
+
+        		return array($objTaxClass->id => array
+    			(
+    				'label'			=> 'Steuer enthalten', //$this->translate($objRates->label ? $objRates->label : $objRates->name),
+    				'price'			=> $strPercent . '%',
+    				'total_price'	=> Isotope::getInstance()->roundPrice($fltTax, $objTaxClass->applyRoundingIncrement),
+    				'add'			=> false,
+    			));
+
+    		}
+
+    		return array();
+        }
+    }
+
+
+    protected function calculateTaxIncluded($fltPrice, $strRate)
+    {
+        $intPercent = self::getTaxPercentForRate($strRate);
+
+        return $fltPrice - ($fltPrice / (1 + ($intPercent / 100)));
+    }
+
+    protected function calculateTaxSurcharge($fltPrice, $strRate)
+    {
+        $intPercent = self::getTaxPercentForRate($strRate);
+
+        return ($fltPrice * (1 + ($intPercent / 100))) - $fltPrice;
+    }
+
+
+    public static function getTaxNotice()
+    {
+        $objAddress = Isotope::getInstance()->Cart->shippingAddress;
+        $arrCountries = Isotope::getInstance()->call('getCountries');
+        $strCountry = $arrCountries[$objAddress->country];
+
+        $b = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEuGuest'], $strCountry);
+        $c = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEu'], $strCountry);
+        $d = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['confirmedVatNo'], $objAddress->vat_no);
+        $e = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['unconfirmedVatNo'], $objAddress->vat_no, $strCountry);
+        $f = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['noVatNo'], $strCountry);
+
+        if (self::isGermany()) {
+            return '';
+        }
+
+        if (!self::isOnCheckoutPage()) {
+
+            if (FE_USER_LOGGED_IN === true && !self::isEuropeanUnion()) {
+                return $c;
+            } elseif (FE_USER_LOGGED_IN === true && self::isEuropeanUnion() && self::hasValidVatNo()) {
+                return $d;
+            } elseif (self::hasNetPriceGroup()) {
+
+                if (self::isEuropeanUnion() && self::hasVatNo() && !self::hasValidVatNo()) {
+                    return $e;
+                } else {
+                    return $b;
+                }
+
+            } elseif (self::isEuropeanUnion()) {
+                return $f;
+            } else {
+                return $b;
+            }
+
+        } else {
+
+            if (!self::isEuropeanUnion()) {
+                return $c;
+            } elseif (self::isEuropeanUnion() && self::hasValidVatNo()) {
+                return $d;
+            } elseif (self::isEuropeanUnion() && self::hasVatNo()) {
+                return $e;
+            } else {
+                return '';
+            }
+        }
+    }
+
+
+
+
+
+
 	/**
 	 * Inject notes in default templates and set certain variables
 	 * @param string
@@ -54,7 +311,7 @@ class IsotopeGermanize extends IsotopeFrontend
 			{
 				$strSearchTag = 'baseprice';
 			}
-			
+
 			$strBuffer = preg_replace('#\<div class="'.$strSearchTag.'">(.*)\</div>(.*)#Uis', '<div class="'.$strSearchTag.'">\1</div>'.$this->isotopeGermanizeInsertTags('isotopeGerman::notePricing').'\2', $strBuffer);
 		}
 
@@ -74,7 +331,7 @@ class IsotopeGermanize extends IsotopeFrontend
 		$this->import('FrontendUser', 'User');
 
 		$arrTag = trimsplit('::', $strTag);
-		
+
 		if($arrTag[0] == 'isotopeGerman')
 		{
 			switch($arrTag[1])
@@ -94,7 +351,7 @@ class IsotopeGermanize extends IsotopeFrontend
 					if($this->Isotope->Config->pageShipping)
 					{
 						$objTarget = $this->getPageDetails($this->Isotope->Config->pageShipping);
-	
+
 						if ($GLOBALS['TL_CONFIG']['addLanguageToUrl'])
 						{
 							$strUrl = $this->generateFrontendUrl($objTarget->row(), null, $objTarget->rootLanguage);
@@ -103,9 +360,9 @@ class IsotopeGermanize extends IsotopeFrontend
 						{
 							$strUrl = $this->generateFrontendUrl($objTarget->row());
 						}
-						
+
 						$strLink = '<a href="'.$strUrl.'"';
-						
+
 						if (strncmp($this->Isotope->Config->shippingRel, 'lightbox', 8) !== 0 || $objPage->outputFormat == 'xhtml')
 						{
 							$strLink .= ' rel="'. $this->Isotope->Config->shippingRel .'"';
@@ -114,12 +371,12 @@ class IsotopeGermanize extends IsotopeFrontend
 						{
 							$strLink .= ' data-lightbox="'. substr($this->Isotope->Config->shippingRel, 9, -1) .'"';
 						}
-						
+
 						if($this->Isotope->Config->shippingTarget)
 						{
 							$strLink .= ($objPage->outputFormat == 'xhtml') ? ' onclick="return !window.open(this.href)"' : ' target="_blank"';
 						}
-						
+
 						$strLink .= '>';
 					}
 
@@ -131,7 +388,7 @@ class IsotopeGermanize extends IsotopeFrontend
 						$objRate = $this->Database->prepare("SELECT rate FROM tl_iso_tax_rate WHERE id=(SELECT includes FROM tl_iso_tax_class WHERE id=?)")
 							->limit(1)
 							->execute($arrTag[2]);
-						
+
 						if($objRate->numRows)
 						{
 							$arrRate = unserialize($objRate->rate);
@@ -142,7 +399,7 @@ class IsotopeGermanize extends IsotopeFrontend
 							$arrTag[2] = false;
 						}
 					}
-					
+
 					//Build the pricing note
 					$return = '<div class="notePricing">';
 
@@ -161,9 +418,9 @@ class IsotopeGermanize extends IsotopeFrontend
 							{
 								$objClasses = $this->Database->prepare("SELECT rates FROM tl_iso_tax_class")
 									->execute();
-								
+
 								$arrRates = array();
-								
+
 								while($objClasses->next())
 								{
 									$tmp = unserialize($objClasses->rates);
@@ -172,10 +429,10 @@ class IsotopeGermanize extends IsotopeFrontend
 										$arrRates = array_unique(array_merge($arrRates,$tmp));
 									}
 								}
-								
+
 								$objRates = $this->Database->prepare("SELECT groups FROM tl_iso_tax_rate WHERE id IN(?)")
 									->execute($arrRates);
-								
+
 								while($objRates->next())
 								{
 									$tmp = unserialize($objRates->groups);
@@ -274,7 +531,7 @@ class IsotopeGermanize extends IsotopeFrontend
 			{
 				// Don't calculate tax, no further checking
 				$return = false;
-				
+
 				$status = 'confirmedVatNo';
 			}
 			else // VAT-Id present, but unconfirmed
@@ -289,9 +546,9 @@ class IsotopeGermanize extends IsotopeFrontend
 			// Look for tax rates that may be added to the actual tax rate
 			$objClasses = $this->Database->prepare("SELECT id, rates FROM tl_iso_tax_class WHERE includes=?")
 				->execute($objRate->id);
-			
+
 			$arrNetRates = array();
-	
+
 			while($objClasses->next())
 			{
 				$arrNetRates = array_unique(array_merge($arrNetRates, unserialize($objClasses->rates)));
@@ -357,7 +614,7 @@ class IsotopeGermanize extends IsotopeFrontend
 				$arrAddressData = $this->Isotope->Cart->billingAddress_data;
 				$strAddrType = 'billing_address';
 			}
-		
+
 			// Something relevant has changed
 			if($strAddrType== $strField && $this->relevantModifications($strAddrType, $arrAddressData))
 			{
@@ -374,24 +631,24 @@ class IsotopeGermanize extends IsotopeFrontend
 				{
 					$this->Input->setPost($strAddrType.'_vat_no_confirmed',false);
 					$this->Input->setPost($strAddrType.'_vat_no_check',false);
-				
+
 					return $arrOptions;
 				}
-	
+
 				// If only manually confirmed VAT-ids are used
 				if($this->Isotope->Config->manualVatCheck)
 				{
 	        		// No guest order without VAT-id on manual confirmation
 					$this->Input->setPost($strAddrType.'_vat_no_confirmed',false);
-	
+
 					// VAT-id was confirmed in the member data, given address fits it
 					if(FE_USER_LOGGED_IN && $this->User->vat_no_confirmed && !$this->relevantModifications($strAddrType, $this->User, true))
 					{
 						$this->Input->setPost($strAddrType.'_vat_no_confirmed',true);
 					}
-	
+
 					$this->Input->setPost($strAddrType.'_vat_no_check',false);
-				
+
 					return $arrOptions;
 				}
 
@@ -403,13 +660,13 @@ class IsotopeGermanize extends IsotopeFrontend
 		        		// No guest ordewr without VAT
 						$this->Input->setPost($strAddrType.'_vat_no_confirmed',false);
 						$this->Input->setPost($strAddrType.'_vat_no_check',false);
-			
+
 						return $arrOptions;
 					}
 				}
-	
+
 				// Still unconfirmed
-	
+
 				// Automatic check
 				// Format:
 				// - confirmed
@@ -441,7 +698,7 @@ class IsotopeGermanize extends IsotopeFrontend
 					'original'      =>  $arrCheck['response']['original'],
 					'error'         =>  $arrCheck['error']
 					);
-		
+
 				// Log the result, mail it
 				if($arrCheck['confirmed'])
 				{
@@ -520,9 +777,9 @@ class IsotopeGermanize extends IsotopeFrontend
 		{
 			if($strRelevant == 'street_1' && $userData)
 			{
-				$strRelevant == 'street'; 
+				$strRelevant == 'street';
 			}
-        
+
 			if(!$userData || $strRelevant == 'street_2' || $strRelevant == 'street_3')
 			{
 				if($this->Input->post($addrType.'_'.$strRelevant) && $this->Input->post($addrType.'_'.$strRelevant) != (is_object($varData) ? $varData->$strRelevant : $varData[$strRelevant]))
@@ -546,10 +803,10 @@ class IsotopeGermanize extends IsotopeFrontend
 	{
 		// Filter characters
 		$strVatNo = str_replace(array(
-			chr(0), 
-			chr(9), 
-			chr(10), 
-			chr(11), 
+			chr(0),
+			chr(9),
+			chr(10),
+			chr(11),
 			chr(13),
 			chr(23),
 			chr(92),
@@ -565,7 +822,7 @@ class IsotopeGermanize extends IsotopeFrontend
 
 		// Country codes from addresses
 		$strCountry = strtoupper(trim(($strCheckCountry=='gr' ? 'el' : $strCheckCountry)));
-		
+
 		// VAT-ids without country codes
 		$strNo = substr($strVatNo,2);
 
@@ -618,7 +875,7 @@ class IsotopeGermanize extends IsotopeFrontend
 			{
 				$this->import($callback[0]);
 				$arrReturn = $this->$callback[0]->$callback[1]($this, $arrAddress, $arrOwn);
-				
+
 				if($arrReturn['confirmed'])
 				{
 					return array
@@ -639,7 +896,7 @@ class IsotopeGermanize extends IsotopeFrontend
 				}
 			}
 		}
-		
+
 		// No verfication at all
 		return array
 			(
