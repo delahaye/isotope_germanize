@@ -18,7 +18,7 @@
  * Modify palettes
  */
 
-$GLOBALS['TL_DCA']['tl_member']['palettes']['default'] = str_replace('country','country,vat_no,vat_no_confirmed,vat_no_check',$GLOBALS['TL_DCA']['tl_member']['palettes']['default']);
+$GLOBALS['TL_DCA']['tl_member']['palettes']['default'] = str_replace('country','country,vat_no,vat_no_ok',$GLOBALS['TL_DCA']['tl_member']['palettes']['default']);
 
 
 /**
@@ -34,19 +34,14 @@ $GLOBALS['TL_DCA']['tl_member']['fields']['vat_no'] = array
 	'eval'					=> array('maxlength'=>255, 'feEditable'=>true, 'feGroup'=>'address', 'tl_class'=>'w50'),
 );
 
-$GLOBALS['TL_DCA']['tl_member']['fields']['vat_no_confirmed'] = array
+$GLOBALS['TL_DCA']['tl_member']['fields']['vat_no_ok'] = array
 (
-	'label'					=> &$GLOBALS['TL_LANG']['tl_member']['vat_no_confirmed'],
+	'label'					=> &$GLOBALS['TL_LANG']['tl_member']['vat_no_ok'],
 	'exclude'				=> true,
 	'filter'				=> true,
-	'inputType'				=> 'checkbox',
-	'eval'					=> array('feEditable'=>true, 'feViewable'=>true, 'feGroup'=>'address', 'tl_class'=>'w50 m12')
-);
-
-$GLOBALS['TL_DCA']['tl_member']['fields']['vat_no_check'] = array
-(
-	'label'					=> &$GLOBALS['TL_LANG']['tl_member']['vat_no_check'],
-	'exclude'				=> true,
-	'inputType'				=> 'textarea',
-	'eval'					=> array('feEditable'=>true, 'feViewable'=>true, 'feGroup'=>'address', 'tl_class'=>'clr long')
+	'inputType'				=> (TL_MODE=='BE' ? 'select':'hidden'),
+	'options'				=> array('nok', 'nok_invalid', 'nok_simple', 'nok_qualified', 'ok_qualified', 'ok_manual'),
+	'reference'				=> &$GLOBALS['TL_LANG']['tl_member'],
+	'default'				=> 'nok',
+	'eval'					=> array('feEditable'=>true, 'feViewable'=>true, 'feGroup'=>'personal', 'tl_class'=>'w50')
 );

@@ -14,15 +14,15 @@
 
 CREATE TABLE `tl_iso_config` (
   `germanize` char(1) NOT NULL default '',
-  `shippingNote` int(10) unsigned NOT NULL default '0',
-  `pageShipping` int(10) unsigned NOT NULL default '0',
-  `shippingTarget` char(1) NOT NULL default '',
-  `shippingRel` varchar(255) NOT NULL default '',
-  `checkoutPages` blob NULL,
-  `netPriceGroups` blob NULL,
-  `manualVatCheck` char(1) NOT NULL default '',
-  `onlyMemberVatCheck` char(1) NOT NULL default '',
-  `groupsVatCheck` blob NULL,
+  `shipping_note` int(10) unsigned NOT NULL default '0',
+  `shipping_page` int(10) unsigned NOT NULL default '0',
+  `shipping_target` char(1) NOT NULL default '',
+  `shipping_rel` varchar(255) NOT NULL default '',
+  `checkout_pages` blob NULL,
+  `netprice_groups` blob NULL,
+  `vatcheck_guests` char(1) NOT NULL default '',
+  `vatcheck_member` char(1) NOT NULL default '',
+  `vatcheck_groups` blob NULL,
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -32,19 +32,10 @@ CREATE TABLE `tl_iso_config` (
 --
 
 CREATE TABLE `tl_iso_tax_class` (
-  `germanize_price` varchar(5) NOT NULL default ''
-  `germanize_rate` varchar(9) NOT NULL default ''
+  `germanize_price` varchar(5) NOT NULL default '',
+  `germanize_rate` decimal(12,2) NOT NULL default '0.00',
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
--- --------------------------------------------------------
-
---
--- Table `tl_iso_tax_rate`
---
-
-CREATE TABLE `tl_iso_tax_rate` (
-  `excludeFromVatHandling` char(1) NOT NULL default ''
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -53,8 +44,7 @@ CREATE TABLE `tl_iso_tax_rate` (
 --
 
 CREATE TABLE `tl_iso_addresses` (
-  `vat_no_confirmed` char(1) NOT NULL default '',
-  `vat_no_check` text NULL,
+  `vat_no_ok` varchar(16) NOT NULL default 'nok'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -65,6 +55,5 @@ CREATE TABLE `tl_iso_addresses` (
 
 CREATE TABLE `tl_member` (
   `vat_no` varchar(255) NOT NULL default '',
-  `vat_no_confirmed` char(1) NOT NULL default '',
-  `vat_no_check` text NULL,
+  `vat_no_ok` varchar(16) NOT NULL default 'nok'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

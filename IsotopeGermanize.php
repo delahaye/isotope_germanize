@@ -8,6 +8,7 @@
  *
  * @copyright  2013 de la Haye Kommunikationsdesign <http://www.delahaye.de>
  * @author     Christian de la Haye <service@delahaye.de>
+ * @author     Andreas Schempp <andreas.schempp@terminal42.ch>
  * @package    isotope_germanize
  * @license    LGPL
  * @filesource
@@ -19,128 +20,17 @@
  *
  * @package	   isotope_germanize
  * @author     Christian de la Haye <service@delahaye.de>
+ * @author     Andreas Schempp <andreas.schempp@terminal42.ch>
  */
 class IsotopeGermanize extends IsotopeFrontend
 {
 
     protected static $arrEuCountries = array('at', 'be', 'bg', 'cy', 'cz', 'de', 'dk', 'es', 'fi', 'fr', 'gb', 'gr', 'hu', 'ie', 'it', 'je', 'lt', 'lu', 'lv', 'mt', 'nl', 'pl', 'pt', 'ro', 'se', 'si', 'sk');
 
+	protected static $strHost = 'evatr.bff-online.de';
 
-    public static function isActive()
-    {
-        return (bool) Isotope::getInstance()->Config->germanize;
-    }
+	protected $arrCheckData = array();
 
-    public static function isOnCheckoutPage()
-    {
-        global $objPage;
-
-        $arrPages = deserialize(Isotope::getInstance()->Config->checkoutPages, true);
-
-        return in_array($objPage->id, $arrPages);
-    }
-
-    /**
-     * Return true if user is in germany or country is unknown
-     * @return bool
-     */
-    public static function isGermany()
-    {
-        $strCountry = Isotope::getInstance()->Cart->shippingAddress->country;
-
-        return ($strCountry == 'de' || $strCountry == '');
-    }
-
-    public static function isEuropeanUnion()
-    {
-        return in_array(Isotope::getInstance()->Cart->shippingAddress->country, self::$arrEuCountries);
-    }
-
-    public static function hasNetPriceGroup()
-    {
-        if (FE_USER_LOGGED_IN !== true) {
-            return false;
-        }
-
-        $arrUserGroups = FrontendUser::getInstance()->groups;
-        $arrNetGroups = deserialize(Isotope::getInstance()->Config->netPriceGroups);
-
-        if (!is_array($arrUserGroups) || !is_array($arrNetGroups)) {
-            return false;
-        }
-
-        return count(array_intersect($arrUserGroups, $arrNetGroups)) > 0;
-    }
-
-    public static function hasVatNo()
-    {
-        return Isotope::getInstance()->Cart->shippingAddress->vat_no != '';
-    }
-
-    public static function hasValidVatNo()
-    {
-        if (!self::hasVatNo()) {
-            return false;
-        }
-
-        // TODO: implement VAT check here
-
-        return true;
-    }
-
-    public static function hasTaxFreePrices()
-    {
-        $blnGuestCheck = (FE_USER_LOGGED_IN === true || self::isOnCheckoutPage());
-
-        // Situation 1
-        if ($blnGuestCheck && !self::isEuropeanUnion()) {
-            return true;
-        }
-
-        // Situation 2
-        if ($blnGuestCheck && self::isEuropeanUnion() && !self::isGermany() && self::hasValidVatNo()) {
-            return true;
-        }
-
-        return false;
-    }
-
-
-    public static function hasNetPrices()
-    {
-        if (self::hasTaxFreePrices() || !self::hasNetPriceGroup()) {
-            return false;
-        }
-
-        if (!self::isOnCheckoutPage() || self::isEuropeanUnion()) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public function hasGrossPrices()
-    {
-        return (!self::hasTaxFreePrices() && !self::hasNetPrices());
-    }
-
-    public static function getTaxPercentForRate($strRate)
-    {
-        switch ($strRate)
-        {
-            case 'regular':
-                return 19;
-
-            case 'reduced':
-                return 7;
-
-            case 'excepted':
-                return 0;
-
-            default:
-                throw new InvalidArgumentException('Unknown german tax rate "' . $strRate . '"');
-        }
-    }
 
     /**
      * Overwrite the default Isotope tax calculation if german store config is active
@@ -183,8 +73,8 @@ class IsotopeGermanize extends IsotopeFrontend
 
                 return array($objTaxClass->id => array
     			(
-    				'label'			=> 'Steuer hinzu', //$this->translate($objRates->label ? $objRates->label : $objRates->name),
-    				'price'			=> $strPercent . '%',
+    				'label'			=> $GLOBALS['TL_LANG']['iso_germanize']['vatCart']['net'],
+    				'price'			=> $strPercent,
     				'total_price'	=> Isotope::getInstance()->roundPrice($fltTax, $objTaxClass->applyRoundingIncrement),
     				'add'			=> true,
     			));
@@ -196,8 +86,8 @@ class IsotopeGermanize extends IsotopeFrontend
 
         		return array($objTaxClass->id => array
     			(
-    				'label'			=> 'Steuer enthalten', //$this->translate($objRates->label ? $objRates->label : $objRates->name),
-    				'price'			=> $strPercent . '%',
+    				'label'			=> $GLOBALS['TL_LANG']['iso_germanize']['vatCart']['gross'],
+    				'price'			=> $strPercent,
     				'total_price'	=> Isotope::getInstance()->roundPrice($fltTax, $objTaxClass->applyRoundingIncrement),
     				'add'			=> false,
     			));
@@ -209,21 +99,185 @@ class IsotopeGermanize extends IsotopeFrontend
     }
 
 
-    protected function calculateTaxIncluded($fltPrice, $strRate)
+    /**
+     * Return true if german tax management is active
+     * @return bool
+     */
+    public static function isActive()
     {
-        $intPercent = self::getTaxPercentForRate($strRate);
-
-        return $fltPrice - ($fltPrice / (1 + ($intPercent / 100)));
-    }
-
-    protected function calculateTaxSurcharge($fltPrice, $strRate)
-    {
-        $intPercent = self::getTaxPercentForRate($strRate);
-
-        return ($fltPrice * (1 + ($intPercent / 100))) - $fltPrice;
+        return (bool) Isotope::getInstance()->Config->germanize;
     }
 
 
+    /**
+     * Return true if user is on a checkout page
+     * @return bool
+     */
+    public static function isOnCheckoutPage()
+    {
+        global $objPage;
+
+        $arrPages = deserialize(Isotope::getInstance()->Config->checkout_pages, true);
+
+        return in_array($objPage->id, $arrPages);
+    }
+
+
+    /**
+     * Return true if user is in germany or country is unknown
+     * @return bool
+     */
+    public static function isGermany()
+    {
+        $strCountry = Isotope::getInstance()->Cart->shippingAddress->country;
+
+        return ($strCountry == 'de' || $strCountry == '');
+    }
+
+
+    /**
+     * Return true if address is in the EU
+     * @return bool
+     */
+    public static function isEuropeanUnion()
+    {
+        return in_array(Isotope::getInstance()->Cart->shippingAddress->country, self::$arrEuCountries);
+    }
+
+
+    /**
+     * Return true if user is in a group with net prices
+     * @return bool
+     */
+    public static function hasNetPriceGroup()
+    {
+        if (FE_USER_LOGGED_IN !== true) {
+            return false;
+        }
+
+        $arrUserGroups = FrontendUser::getInstance()->groups;
+        $arrNetGroups = deserialize(Isotope::getInstance()->Config->netprice_groups);
+
+        if (!is_array($arrUserGroups) || !is_array($arrNetGroups)) {
+            return false;
+        }
+
+        return count(array_intersect($arrUserGroups, $arrNetGroups)) > 0;
+    }
+
+
+    /**
+     * Return true if a vat-no exists
+     * @return bool
+     */
+    public static function hasVatNo()
+    {
+        return Isotope::getInstance()->Cart->shippingAddress->vat_no != '';
+    }
+
+
+    /**
+     * Return true if a valid vat-no exists
+     * @return bool
+     */
+    public static function hasValidVatNo()
+    {
+        if (!self::hasVatNo() 
+        	|| (FE_USER_LOGGED_IN !== true && !Isotope::getInstance()->Config->vatcheck_guests)
+        	|| (Isotope::getInstance()->Cart->shippingAddress->vat_no_ok != 'ok_qualified' && Isotope::getInstance()->Cart->shippingAddress->vat_no_ok != 'ok_manual')) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Return true if all prices have to be tax free
+     * @return bool
+     */
+    public static function hasTaxFreePrices()
+    {
+        $blnGuestCheck = (FE_USER_LOGGED_IN === true || self::isOnCheckoutPage());
+
+        // Situation 1
+        if ($blnGuestCheck && !self::isEuropeanUnion()) {
+            return true;
+        }
+
+        // Situation 2
+        if ($blnGuestCheck && self::isEuropeanUnion() && !self::isGermany() && self::hasValidVatNo()) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Return true if net prices are active
+     * @return bool
+     */
+    public static function hasNetPrices()
+    {
+        if (self::hasTaxFreePrices() || !self::hasNetPriceGroup()) {
+            return false;
+        }
+
+        if (!self::isOnCheckoutPage() || self::isEuropeanUnion()) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Return true if gross prices are active
+     * @return bool
+     */
+    public function hasGrossPrices()
+    {
+        return (!self::hasTaxFreePrices() && !self::hasNetPrices());
+    }
+
+
+    /**
+     * Return a nice formatted string with a tax rate
+     * @return string
+     */
+    public static function getTaxPercentForRate($fltRate)
+    {
+		$arrFormat = $GLOBALS['ISO_NUM'][Isotope::getInstance()->Config->currencyFormat];
+    	
+		return number_format($fltRate, (floor($fltRate)==$fltRate ? 0 : 1), $arrFormat[1], $arrFormat[2]).'%';
+    }
+
+
+    /**
+     * Return gross price
+     * @return float
+     */
+    protected function calculateTaxIncluded($fltPrice, $fltRate)
+    {
+        return $fltPrice - ($fltPrice / (1 + ($fltRate / 100)));
+    }
+
+
+    /**
+     * Return net price
+     * @return float
+     */
+    protected function calculateTaxSurcharge($fltPrice, $fltRate)
+    {
+        return ($fltPrice * (1 + ($fltRate / 100))) - $fltPrice;
+    }
+
+
+    /**
+     * Return a notice about the vat status of the order, is displayed in the cart and checkout
+     * @return string
+     */
     public static function getTaxNotice()
     {
         $objAddress = Isotope::getInstance()->Cart->shippingAddress;
@@ -276,43 +330,63 @@ class IsotopeGermanize extends IsotopeFrontend
 
 
 
-
-
-
 	/**
-	 * Inject notes in default templates and set certain variables
+	 * Inject notes in default templates automatically
 	 * @param string
 	 * @param string
 	 * @return string
 	 */
 	public function injectNotes($strBuffer, $strTemplate)
 	{
-		// VAT note in the main cart
-		if($strTemplate == 'iso_cart_full' && strpos($strBuffer,'isotopeGerman::noteVat')===false)
+		switch($strTemplate)
 		{
-			$strBuffer = str_replace('<div class="submit_container">',$this->isotopeGermanizeInsertTags('isotopeGerman::noteVat').'<div class="submit_container">',$strBuffer);
-		}
+			case 'iso_list_default':
+			case 'iso_list_variants':
+			case 'iso_reader_default':
+				// Pricing note at the product
+				if(strpos($strBuffer,'isotopeGerman::notePricing')===false)
+				{
+					// Inject the pricing note after the baseprice or the price
+					$strSearchTag = 'price';
+					if(strpos($strBuffer,'class="baseprice')!==false)
+					{
+						$strSearchTag = 'baseprice';
+					}
+					return preg_replace('#\<div class="'.$strSearchTag.'">(.*)\</div>(.*)#Uis', '<div class="'.$strSearchTag.'">\1</div>'.$this->isotopeGermanizeInsertTags('isotopeGerman::notePricing').'\2', $strBuffer);
+				}
+				break;
 
-		// VAT note in the checkout
-		if(($strTemplate == 'iso_checkout_order_products'
-			|| $strTemplate == 'iso_checkout_shipping_method'
-			|| $strTemplate == 'iso_checkout_payment_method'
-			) && strpos($strBuffer,'isotopeGerman::noteVatCheckout')===false)
-		{
-			$strBuffer .= $this->isotopeGermanizeInsertTags('isotopeGerman::noteVatCheckout');
-		}
+			case 'iso_cart_full':
+				// VAT note in the main cart
+				if(strpos($strBuffer,'isotopeGerman::noteVat')===false)
+				{
+					$strBuffer = str_replace('<div class="submit_container">',$this->isotopeGermanizeInsertTags('isotopeGerman::noteVat').'<div class="submit_container">',$strBuffer);
+				}
+				// shipping note in the main cart
+				if(strpos($strBuffer,'isotopeGerman::noteShipping')===false)
+				{
+					$strBuffer = str_replace('<div class="submit_container">',$this->isotopeGermanizeInsertTags('isotopeGerman::noteShipping').'<div class="submit_container">',$strBuffer);
+				}
+				return $strBuffer;
+				break;
 
-		// Pricing note at the product
-		if(strpos($strBuffer,'isotopeGerman::notePricing')===false && ($strTemplate == 'iso_list_default' || $strTemplate == 'iso_list_variants' || $strTemplate == 'iso_reader_default'))
-		{
-			// Inject the pricing note after the baseprice or the price
-			$strSearchTag = 'price';
-			if(strpos($strBuffer,'class="baseprice')!==false)
-			{
-				$strSearchTag = 'baseprice';
-			}
+			case 'iso_checkout_shipping_method':
+			case 'iso_checkout_payment_method':
+				// VAT note in the other checkout steps
+				if(strpos($strBuffer,'isotopeGerman::noteVat')===false)
+				{
+					return $strBuffer.$this->isotopeGermanizeInsertTags('isotopeGerman::noteVat');
+				}
+				break;
 
-			$strBuffer = preg_replace('#\<div class="'.$strSearchTag.'">(.*)\</div>(.*)#Uis', '<div class="'.$strSearchTag.'">\1</div>'.$this->isotopeGermanizeInsertTags('isotopeGerman::notePricing').'\2', $strBuffer);
+			case 'iso_checkout_order_products':
+				// VAT note in the checkout product overview (has to be above the products/total)
+				if(strpos($strBuffer,'isotopeGerman::noteVat')===false)
+				{
+					return $this->isotopeGermanizeInsertTags('isotopeGerman::noteVat').$strBuffer;
+				}
+				break;
+
 		}
 
 		return $strBuffer;
@@ -326,10 +400,6 @@ class IsotopeGermanize extends IsotopeFrontend
 	 */
 	public function isotopeGermanizeInsertTags($strTag)
 	{
-		global $objPage;
-
-		$this->import('FrontendUser', 'User');
-
 		$arrTag = trimsplit('::', $strTag);
 
 		if($arrTag[0] == 'isotopeGerman')
@@ -337,472 +407,493 @@ class IsotopeGermanize extends IsotopeFrontend
 			switch($arrTag[1])
 			{
 				case 'noteShipping':
-					$arrAddresses = array('billing'=>$this->Isotope->Cart->billingAddress, 'shipping'=>$this->Isotope->Cart->shippingAddress);
-
-					// Shipping note
-					if($this->Isotope->Config->shippingNote)
-					{
-						$return = $this->replaceInsertTags('{{insert_article::'.$this->Isotope->Config->shippingNote.'}}');
-					}
+					return self::getShippingNotice();
 					break;
-
 				case 'notePricing':
-					// Build link to the shipping costs page
-					if($this->Isotope->Config->pageShipping)
-					{
-						$objTarget = $this->getPageDetails($this->Isotope->Config->pageShipping);
-
-						if ($GLOBALS['TL_CONFIG']['addLanguageToUrl'])
-						{
-							$strUrl = $this->generateFrontendUrl($objTarget->row(), null, $objTarget->rootLanguage);
-						}
-						else
-						{
-							$strUrl = $this->generateFrontendUrl($objTarget->row());
-						}
-
-						$strLink = '<a href="'.$strUrl.'"';
-
-						if (strncmp($this->Isotope->Config->shippingRel, 'lightbox', 8) !== 0 || $objPage->outputFormat == 'xhtml')
-						{
-							$strLink .= ' rel="'. $this->Isotope->Config->shippingRel .'"';
-						}
-						else
-						{
-							$strLink .= ' data-lightbox="'. substr($this->Isotope->Config->shippingRel, 9, -1) .'"';
-						}
-
-						if($this->Isotope->Config->shippingTarget)
-						{
-							$strLink .= ($objPage->outputFormat == 'xhtml') ? ' onclick="return !window.open(this.href)"' : ' target="_blank"';
-						}
-
-						$strLink .= '>';
-					}
-
-					// Get tax rate of the product if the second parameter in the insert tag is numeric
-					if(is_numeric($arrTag[2]))
-					{
-						$arrFormat = $GLOBALS['ISO_NUM'][$this->Isotope->Config->currencyFormat];
-
-						$objRate = $this->Database->prepare("SELECT rate FROM tl_iso_tax_rate WHERE id=(SELECT includes FROM tl_iso_tax_class WHERE id=?)")
-							->limit(1)
-							->execute($arrTag[2]);
-
-						if($objRate->numRows)
-						{
-							$arrRate = unserialize($objRate->rate);
-							$arrTag[2] = number_format($arrRate['value'], (floor($arrRate['value'])==$arrRate['value'] ? 0 : 1), $arrFormat[1], $arrFormat[2]).$arrRate['unit'];
-						}
-						else
-						{
-							$arrTag[2] = false;
-						}
-					}
-
-					//Build the pricing note
-					$return = '<div class="notePricing">';
-
-					switch($_SESSION['CHECKOUT_DATA']['vatManagement']['vatStatus'])
-					{
-						case 'nonEu':
-						case 'confirmedVatNo':
-							$return .= str_replace('</a>',($strLink ? '</a>':''),str_replace('<a>',$strLink,sprintf($GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['netWithoutVat'],($arrTag[2] ? $arrTag[2].' ' : '')))).'</div>';
-							break;
-
-						default:
-							$arrGroupsNet = array();
-
-							// Get possible net price groups from tax rates that are added in a tax class
-							if(FE_LOGGED_IN)
-							{
-								$objClasses = $this->Database->prepare("SELECT rates FROM tl_iso_tax_class")
-									->execute();
-
-								$arrRates = array();
-
-								while($objClasses->next())
-								{
-									$tmp = unserialize($objClasses->rates);
-									if(is_array($tmp))
-									{
-										$arrRates = array_unique(array_merge($arrRates,$tmp));
-									}
-								}
-
-								$objRates = $this->Database->prepare("SELECT groups FROM tl_iso_tax_rate WHERE id IN(?)")
-									->execute($arrRates);
-
-								while($objRates->next())
-								{
-									$tmp = unserialize($objRates->groups);
-									if(is_array($tmp))
-									{
-										$arrGroupsNet = array_unique(array_merge($arrGroupsNet,$tmp));
-									}
-								}
-							}
-
-							if(FE_LOGGED_IN && is_array($this->User->groups) && count(array_intersect($arrGroupsNet, $this->User->groups)))
-							{
-								$return .= str_replace('<a>',$strLink,sprintf($GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['netWithVat'],($arrTag[2] ? $arrTag[2].' ' : ''))).'</div>';
-							}
-							else
-							{
-								$return .= str_replace('<a>',$strLink,sprintf($GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['gross'],($arrTag[2] ? $arrTag[2].' ' : ''))).'</div>';
-							}
-							break;
-					}
+					// [2]: # tax class, [3]: shipping exempt, [4]: txt for text version
+					return $this->getPriceNotice($arrTag[2], $arrTag[3], $arrTag[4]);
 					break;
-
 				case 'noteVat':
-				case 'noteVatCheckout':
-					// Build a note in the cart and the checkout depending on the VAT state of the customer
-					$return = '<div class="noteVat '.$arrTag[1].'">';
-
-					switch($_SESSION['CHECKOUT_DATA']['vatManagement']['vatStatus'])
-					{
-						case 'nonEuGuest':
-							$return .= sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes'][($arrTag[1]=='noteVatCheckout' ? 'nonEu' : 'nonEuGuest')],$_SESSION['CHECKOUT_DATA']['vatManagement']['vatCountry']).'</div>';
-							break;
-
-						case 'nonEu':
-							$return .= sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEu'],$_SESSION['CHECKOUT_DATA']['vatManagement']['vatCountry']).'</div>';
-							break;
-
-						case 'confirmedVatNo':
-							$return .= sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['confirmedVatNo'],$_SESSION['CHECKOUT_DATA']['vatManagement']['vatNo'],$_SESSION['CHECKOUT_DATA']['vatManagement']['vatCountry']).'</div>';
-							break;
-
-						case 'confirmedVatNo':
-							$return .= sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['unconfirmedVatNo'],$_SESSION['CHECKOUT_DATA']['vatManagement']['vatNo'],$_SESSION['CHECKOUT_DATA']['vatManagement']['vatCountry']).'</div>';
-							break;
-
-						default:
-							// Return nothing if there is no VAT note
-							$return = '';
-							break;
-					}
+					return self::getTaxNotice();
 					break;
 			}
+		}
+	}
 
-			// Optional parameter txt for text only
-			if($arrTag[2] == 'txt' || $arrTag[3] == 'txt')
+
+
+    /**
+     * Return the shipping notice built from an article
+     * @return string
+     */
+    protected function getShippingNotice()
+    {
+	    return Isotope::getInstance()->Config->shipping_note ? Controller::replaceInsertTags('{{insert_article::'.Isotope::getInstance()->Config->shipping_note.'}}') : false;
+    }
+
+
+    /**
+     * Return a price notice to be displayed at a single product
+     * @return string
+     */
+    protected function getPriceNotice($intTaxClass=false, $blnShippingExempt=false, $txt=false)
+    {
+		if ((FE_USER_LOGGED_IN === true && !self::isEuropeanUnion()) || (FE_USER_LOGGED_IN === true && !self::isGermany() && self::isEuropeanUnion() && self::hasValidVatNo())) {
+			if (!$blnShippingExempt)
 			{
-				$return = trim(strip_tags($return));
-			}
+				$strNote = $GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['taxfree_shipping'];
 
-			return $return;
+				$strShippingLink = $this->getShippingLink();
+				
+				$note = $strShippingLink ? str_replace('<a>',$strShippingLink, $strNote) : str_replace('<a>','',str_replace('</a>','', $strNote));
+			} else {
+				$strNote = $GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['taxfree_noShipping'];
+			}
+		} elseif (self::hasNetPriceGroup()) {
+
+			$strTax = $this->getTaxRate($intTaxClass);
+			$strTax .= $strTax ? ' ' : '';
+
+			if (!$blnShippingExempt)
+			{
+				$strNote = $GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['net_shipping'];
+
+				$strShippingLink = $this->getShippingLink();
+				
+				$strNote = sprintf(($strShippingLink ? str_replace('<a>',$strShippingLink, $strNote) : str_replace('<a>','',str_replace('</a>','', $strNote))), $strTax);
+			} else {
+
+				$strNote = sprintf($GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['net_noShipping'], $strTax);
+			}
+		} else {
+
+			$strTax = $this->getTaxRate($intTaxClass);
+			$strTax .= $strTax ? ' ' : '';
+
+			if (!$blnShippingExempt)
+			{
+				$strNote = $GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['gross_shipping'];
+
+				$strShippingLink = $this->getShippingLink();
+				
+				$strNote = sprintf(($strShippingLink ? str_replace('<a>',$strShippingLink, $strNote) : str_replace('<a>','',str_replace('</a>','', $strNote))), $strTax);
+			} else {
+				$strNote = sprintf($GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['gross_noShipping'], $strTax);
+			}
 		}
 
+		// Optional parameter txt for text only
+		if($txt)
+		{
+			$strNote = trim(strip_tags($strNote));
+		}
+		
+		return $strNote;
+    }
+
+
+    /**
+     * Return text for a tax rate
+     * @return string
+     */
+    protected function getTaxRate($intTaxClass)
+    {
+		if(!is_numeric($intTaxClass))
+		{
+			return false;
+		}
+
+		$objRate = Database::getInstance()->prepare("SELECT germanize_rate FROM tl_iso_tax_class WHERE id=?")
+			->limit(1)
+			->execute($intTaxClass);
+
+		if($objRate->numRows)
+		{
+			return $this->getTaxPercentForRate($objRate->germanize_rate);
+		}
+		
 		return false;
 	}
 
 
-	/*
-	* Decides on the VAT status of the customer depending on country, EU and VAT-Id
-	 * @param object
-	 * @param float
-	 * @param array
-	 * @return string
-	*/
-	public function handleVat($objRate, $fltPrice, $arrAddresses)
-	{
-		global $objPage;
+    /**
+     * Return a link to the shipping costs page
+     * @return string
+     */
+    protected function getShippingLink()
+    {
+        global $objPage;
 
-		$this->import('FrontendUser', 'User');
-
-		// Define tye of address
-		$strAddrType = $this->Isotope->Cart->shippingAddress_id != -1 ? 'shipping' : 'billing';
-
-		// Skip hook functionality if there is no action to take
-		$return = 'skip';
-
-		// Only affects taxes that are a VAT and only if the shipping goes to another country
-		if ($objRate->excludeFromVatHandling || $arrAddresses[$strAddrType]['country'] == $this->Isotope->Config->shipping_country)
+		if(Isotope::getInstance()->Config->pageShipping)
 		{
-			return $return;
+			return false;
 		}
 
-		// EU country and VAT-Id present
-		if ($arrAddresses[$strAddrType]['vat_no'] && in_array($arrAddresses[$strAddrType]['country'], $GLOBALS['iso_germanize']['eu']))
-		{
-			if($arrAddresses[$strAddrType]['vat_no_confirmed']) // VAT-Id confirmed
-			{
-				// Don't calculate tax, no further checking
-				$return = false;
+		// Build link to the shipping costs page
+		$objTarget = $this->getPageDetails(Isotope::getInstance()->Config->shipping_page);
 
-				$status = 'confirmedVatNo';
-			}
-			else // VAT-Id present, but unconfirmed
-			{
-				$status = 'unconfirmedVatNo';
-			}
+		if ($GLOBALS['TL_CONFIG']['addLanguageToUrl'])
+		{
+			$strUrl = $this->generateFrontendUrl($objTarget->row(), null, $objTarget->rootLanguage);
+		}
+		else
+		{
+			$strUrl = $this->generateFrontendUrl($objTarget->row());
 		}
 
-		// Non-EU
-		elseif(!in_array($arrAddresses[$strAddrType]['country'], $GLOBALS['iso_germanize']['eu']))
+		$strLink = '<a href="'.$strUrl.'"';
+
+		if (strncmp(Isotope::getInstance()->Config->shipping_rel, 'lightbox', 8) !== 0 || $objPage->outputFormat == 'xhtml')
 		{
-			// Look for tax rates that may be added to the actual tax rate
-			$objClasses = $this->Database->prepare("SELECT id, rates FROM tl_iso_tax_class WHERE includes=?")
-				->execute($objRate->id);
+			$strLink .= ' rel="'. Isotope::getInstance()->Config->shipping_rel .'"';
+		}
+		else
+		{
+			$strLink .= ' data-lightbox="'. Isotope::getInstance()->Config->shipping_rel .'"';
+		}
 
-			$arrNetRates = array();
+		if(Isotope::getInstance()->Config->shipping_target)
+		{
+			$strLink .= ($objPage->outputFormat == 'xhtml') ? ' onclick="return !window.open(this.href)"' : ' target="_blank"';
+		}
 
-			while($objClasses->next())
-			{
-				$arrNetRates = array_unique(array_merge($arrNetRates, unserialize($objClasses->rates)));
-			}
+		$strLink .= '>';
 
-			// Only affects guests
-			if (FE_USER_LOGGED_IN !== true)
-			{
-				$status = 'nonEuGuest';
+		return $strLink;
+	}
 
-				if(count($arrNetRates)>0 // Only take included tax rates, but net prices were possible if user was logged in
-					&& !in_array($objPage->id,$this->Isotope->Config->checkoutPages) // On defined (checkout)pages prices are net instead of gross
+
+	/**
+	 * Check vat no and update the status
+	 */
+	public function updateVatCheck()
+    {
+		// Set the data to check as it is not yet stored in the object
+		$addrType = (Isotope::getInstance()->Cart->shippingAddress_id != -1 ? 'shipping_address' : 'billing_address');
+
+		$this->arrCheckData = array(
+			'addr_type'  => $addrType,
+			'company'    => Input::getInstance()->post($addrType.'_company'),
+			'street'     => Input::getInstance()->post($addrType.'_street_1'),
+			'postal'     => Input::getInstance()->post($addrType.'_postal'),
+			'city'       => Input::getInstance()->post($addrType.'_city'),
+			'country'    => Input::getInstance()->post($addrType.'_country'),
+			'vat_no'     => Input::getInstance()->post($addrType.'_vat_no')
+			);
+
+    	// check the vat no
+		if($arrCheck = $this->checkVatNo())
+		{
+			// update member data
+			$this->updateMember($arrCheck['status']);
+
+			// mails for the vendor
+			$this->sendMails($arrCheck);
+
+			// log the action
+			$this->logIt($arrCheck['status']);
+
+			// update the session data
+			Input::getInstance()->setPost($this->arrCheckData['addr_type'].'_vat_no_ok',$arrCheck['status']);
+		}
+	}
+
+
+    /**
+     * Return array with results of the online check
+     * @return array
+     */
+    protected function checkVatNo()
+    {
+		if(!Isotope::getInstance()->Config->vat_no
+			|| self::isGermany()
+			|| !self::isEuropeanUnion()
+			|| (!FE_USER_LOGGED_IN && !Isotope::getInstance()->Config->vatcheck_guests)
+			|| (FE_USER_LOGGED_IN && !Isotope::getInstance()->Config->vatcheck_member)
+			|| !$this->addressHasbeenModified()
+			)
+		{
+			return false;
+		}
+
+		// Formal check vat_no
+	   	if(!$strCustomerVatNo = self::preCheckVatNo($this->arrCheckData['vat_no']))
+		{
+			return array(
+				'status' => 'nok',
+				'error'  => 'vat_no'
+				);
+		}
+
+		// Formal check own vat_no
+	   	if(!$strOwnVatNo = self::preCheckVatNo(Isotope::getInstance()->Config->vat_no))
+	   	{
+			return array(
+				'status' => 'nok_invalid',
+				'error'  => 'own_vat_no'
+				);
+	   	}
+
+		// Server is online
+		if(!self::testConnection())
+		{
+			return array(
+				'status' => 'nok_invalid',
+				'error'  => 'server'
+				);
+		}
+
+		// Verify the vat no online
+		$arrCheck = $this->verifyVatNo($strCustomerVatNo, $strOwnVatNo);
+
+		// don't activate if no member groups shall be auto-activated
+		$arrCheck['status'] = ($arrCheck['status'] == 'ok_qualified' && FE_USER_LOGGED_IN && count(array_intersect(Isotope::getInstance()->Config->vatcheck_groups, FrontendUser::getInstance()->groups)) < 1) ? 'nok_qualified' : $arrCheck['status'];
+
+		return $arrCheck;
+	}
+
+
+    /**
+     * Verify the vat no online
+     * @return array
+     */
+    protected function verifyVatNo($strCustomerVatNo, $strOwnVatNo)
+    {
+		require_once(TL_ROOT.'/system/modules/isotope_germanize/IXR_Library.php');
+
+    	$client = new IXR_Client('https://'.self::$strHost);
+		$UstId_1    = strtoupper($strOwnVatNo);
+		$UstId_2    = strtoupper($strCustomerVatNo);
+		$Firmenname = $this->arrCheckData['company'];
+		$Ort        = $this->arrCheckData['city'];
+		$PLZ        = $this->arrCheckData['postal'];
+		$Strasse    = $this->arrCheckData['street'];
+		$Druck      = $GLOBALS['isotope_germanize']['order_printed_verification'] ? 'ja' : 'nein';
+
+		if (!$client->query('evatrRPC',
+			$UstId_1,
+			$UstId_2,
+			$Firmenname,
+			$Ort,
+			$PLZ,
+			$Strasse,
+			$Druck))
+		{
+			return array(
+				'status'     => 'nok_invalid',
+				'error'      => 'server',
+				'check_code' => $client->getErrorCode().': '.$client->getErrorMessage()
+				);
+		}
+
+		$xml = $client->getResponse();
+
+		preg_match('#(?<=ErrorCode</string></value>\n<value><string>).*(?=</string.*)#', $xml, $arrErrorCode);
+		preg_match('#(?<=Datum</string></value>\n<value><string>).*(?=</string.*)#', $xml, $arrDatum);
+		preg_match('#(?<=Uhrzeit</string></value>\n<value><string>).*(?=</string.*)#', $xml, $arrUhrzeit);
+		preg_match('#(?<=Erg_Name</string></value>\n<value><string>).*(?=</string.*)#', $xml, $arrErg_Name);
+		preg_match('#(?<=Erg_Str</string></value>\n<value><string>).*(?=</string.*)#', $xml, $arrErg_Str);
+		preg_match('#(?<=Erg_PLZ</string></value>\n<value><string>).*(?=</string.*)#', $xml, $arrErg_PLZ);
+		preg_match('#(?<=Erg_Ort</string></value>\n<value><string>).*(?=</string.*)#', $xml, $arrErg_Ort);
+
+		$arrResponse = array(
+			'check_date'    => $GLOBALS['TL_LANG']['iso_germanize']['bff'][$arrDatum[0]],
+			'check_time'    => $GLOBALS['TL_LANG']['iso_germanize']['bff'][$arrUhrzeit[0]],
+			'check_company' => $arrErg_Name[0] ? $GLOBALS['TL_LANG']['iso_germanize']['bff'][$arrErg_Name[0]] : '',
+			'check_street'  => $arrErg_Str[0] ? $GLOBALS['TL_LANG']['iso_germanize']['bff'][$arrErg_Str[0]] : '',
+			'check_postal'  => $arrErg_PLZ[0] ? $GLOBALS['TL_LANG']['iso_germanize']['bff'][$arrErg_PLZ[0]] : '',
+			'check_city'    => $arrErg_Ort[0] ? $GLOBALS['TL_LANG']['iso_germanize']['bff'][$arrErg_Ort[0]] : '',
+			'check_code'    => $arrErrorCode[0]
+		);
+
+		switch($arrErrorCode[0])
+		{
+			// ok
+			case '200':
+				if(($arrErg_Name[0] != 'A' && $arrErg_Name[0] != 'D')
+					|| ($arrErg_Str[0] != 'A' && $arrErg_Str[0] != 'D' && !$GLOBALS['isotope_germanize']['loose_verification_street'])
+					|| ($arrErg_PLZ[0] != 'A' && $arrErg_PLZ[0] != 'D' && !$GLOBALS['isotope_germanize']['loose_verification_postal'])
+					|| ($arrErg_Ort[0] != 'A' && $arrErg_Ort[0] != 'D')
 					)
 				{
-					// Calculate tax, stop checking
-					$return = true;
+					// the vat no doesn't fit the address
+					return array_merge($arrResponse, array(
+						'status'        => 'nok_invalid',
+						'error'         => 'general'
+						));
 				}
-			}
-			else
-			{
-				$status = 'nonEu';
-			}
+
+				// everything is fine
+				return array_merge($arrResponse, array(
+					'status'        => 'ok_qualified'
+					));
+				break;
+
+			// only simple verification available
+			case '216':
+			case '218':
+			case '219':
+				return array_merge($arrResponse, array(
+					'status'        => 'nok_simple',
+					'error'         => 'general'
+					));
+				break;
+
+			// (technical) error
+			default:
+				return array_merge($arrResponse, array(
+					'status'        => 'nok_invalid',
+					'error'         => 'general'
+					));
+				break;
 		}
-
-		// We need some notes in the FE depending on the relevant address
-
-		$arrCountries = $this->getCountries();
-
-		$_SESSION['CHECKOUT_DATA']['vatManagement']['vatStatus']   = $status;
-		$_SESSION['CHECKOUT_DATA']['vatManagement']['vatCountry']  = $arrCountries[$arrAddresses[$strAddrType]['country']];
-		$_SESSION['CHECKOUT_DATA']['vatManagement']['vatNo']       = $arrAddresses[$strAddrType]['vat_no'];
-
-		return $return;
 	}
 
 
-	/*
-	* Sets the VAT state after every modification of the shipping target
-	* @param array
-	* @param string
-	* @param integer
-	* @param object
-	* @return array
-	*/
-	public function setVatStatus($arrOptions, $strField, $intDefaultValue, $objThis)
-	{
-		$this->import('FrontendUser', 'User');
+    /**
+     * Test connection to authority server (is only available 5:00 - 22:00
+     * @return array
+     */
+    public static function testConnection()
+    {
+    	return is_array(gethostbynamel(self::$strHost)) ? true : false;
+	}
 
-		// Address data can be edited in relevant ways -> new check of the VAT-id
-		if($this->Input->post('FORM_SUBMIT')=='iso_mod_checkout_address')
+
+    /**
+     * Log the action 
+     */
+    protected function logIt($strStatus)
+    {
+		switch($strStatus)
 		{
-
-			// Always reset session data
-			unset($_SESSION['CHECKOUT_DATA']['vatManagement']);
-
-			if($this->Isotope->Cart->shippingAddress_id != -1)
-			{
-				$arrAddressData = $this->Isotope->Cart->shippingAddress_data;
-				$strAddrType = 'shipping_address';
-			}
-			else
-			{
-				$arrAddressData = $this->Isotope->Cart->billingAddress_data;
-				$strAddrType = 'billing_address';
-			}
-
-			// Something relevant has changed
-			if($strAddrType== $strField && $this->relevantModifications($strAddrType, $arrAddressData))
-			{
-				$arrCountries = $this->getCountries();
-
-				// Update of the address data for the check
-				foreach($GLOBALS['iso_germanize']['relevantData'] as $strRelevant)
-				{
-	    	    	$arrAddressData[$strRelevant] = $this->Input->post($strAddrType.'_'.$strRelevant);
-				}
-
-				// Never within the own country
-				if($arrAddressData['country'] == $this->Isotope->Config->shipping_country)
-				{
-					$this->Input->setPost($strAddrType.'_vat_no_confirmed',false);
-					$this->Input->setPost($strAddrType.'_vat_no_check',false);
-
-					return $arrOptions;
-				}
-
-				// If only manually confirmed VAT-ids are used
-				if($this->Isotope->Config->manualVatCheck)
-				{
-	        		// No guest order without VAT-id on manual confirmation
-					$this->Input->setPost($strAddrType.'_vat_no_confirmed',false);
-
-					// VAT-id was confirmed in the member data, given address fits it
-					if(FE_USER_LOGGED_IN && $this->User->vat_no_confirmed && !$this->relevantModifications($strAddrType, $this->User, true))
-					{
-						$this->Input->setPost($strAddrType.'_vat_no_confirmed',true);
-					}
-
-					$this->Input->setPost($strAddrType.'_vat_no_check',false);
-
-					return $arrOptions;
-				}
-
-				// If only members can order without VAT
-				if($this->Isotope->Config->onlyMemberVatCheck)
-				{
-					if (!FE_USER_LOGGED_IN || !is_array($this->Isotope->Config->groupsVatCheck) || empty($this->Isotope->Config->groupsVatCheck) || !count(array_intersect($this->Isotope->Config->groupsVatCheck, $this->User->groups)))
-					{
-		        		// No guest ordewr without VAT
-						$this->Input->setPost($strAddrType.'_vat_no_confirmed',false);
-						$this->Input->setPost($strAddrType.'_vat_no_check',false);
-
-						return $arrOptions;
-					}
-				}
-
-				// Still unconfirmed
-
-				// Automatic check
-				// Format:
-				// - confirmed
-				// - responseData
-				//   - check_company
-				//   - check_address
-				//   - url
-				//   - server
-				//   - request_id
-
-				$arrCheck = $this->checkVat($arrAddressData);
-
-				// Fields returned by the check
-				$arrMailfields = array(
-					'vat_no'        => $arrAddressData['vat_no'],
-					'date'          => date($GLOBALS['TL_CONFIG']['datimFormat'],time()),
-					'company'       => $arrAddressData['company'],
-					'street'        => $arrAddressData['street'],
-					'postal'        => $arrAddressData['postal'],
-					'city'          => $arrAddressData['city'],
-					'country'       => $arrCountries[$arrAddressData['country']],
-					'member_id'     => (FE_USER_LOGGED_IN ? $this->User->id : $GLOBALS['TL_LANG']['iso_germanize']['guest_order']),
-					'address_id'    => ($arrAddressData['id'] > 0 ? $arrAddressData['id'] : ''),
-					'server'        =>  $arrCheck['response']['server'],
-					'request_id'    => $arrCheck['response']['request_id'],
-					'check_company' => $arrCheck['response']['check_company'],
-					'check_address' => $arrCheck['response']['check_address'],
-					'url'           =>  $arrCheck['response']['url'],
-					'original'      =>  $arrCheck['response']['original'],
-					'error'         =>  $arrCheck['error']
-					);
-
-				// Log the result, mail it
-				if($arrCheck['confirmed'])
-				{
-					$_SESSION['CHECKOUT_DATA']['vatManagement']['noteCheckoutVatId'] = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['confirmedVatNo'],$arrAddressData['vat_no'],$arrCountries[$arrAddressData['country']]);
-					$_SESSION['CHECKOUT_DATA']['vatManagement']['noteCartVatId']     = $_SESSION['CHECKOUT_DATA']['vatManagement']['noteCheckoutVatId'];
-
-					// Confirmation e-mail if the VAT-id was verified
-					$objEmail          = new Email();
-					$objEmail->subject = $GLOBALS['TL_LANG']['iso_germanize']['mail_verfication_subject'];
-					$objEmail->text    = $GLOBALS['TL_LANG']['iso_germanize']['mail_verfication_text'];
-
-					foreach($arrMailfields as $k=>$v)
-					{
-						$objEmail->subject = str_replace('##'.$k.'##', $v, $objEmail->subject);
-						$objEmail->text    = str_replace('##'.$k.'##', $v, $objEmail->text);
-					}
-
-					$objEmail->sendTo($this->Isotope->Config->email);
-
-					// Log entry, both members and guests
-					$this->log('VAT-ID '.$arrAddressData['vat_no'].' ('.(FE_USER_LOGGED_IN ? 'User '.$this->User->id : 'Guest').'): '.$GLOBALS['TL_LANG']['iso_germanize']['vat_no_confirmed'],'checkVat','VAT-CHECK');
-				}
-				else
-				{
-					// Set the VAT state as unconfirmed
-					$_SESSION['CHECKOUT_DATA']['vatManagement']['noteCheckoutVatId'] = sprintf($GLOBALS['TL_LANG']['iso_germanize']['notes']['unconfirmedVatNo'],$arrAddressData['vat_no'],$arrCountries[$arrAddressData['country']]);
-					$_SESSION['CHECKOUT_DATA']['vatManagement']['noteCartVatId']     = $_SESSION['CHECKOUT_DATA']['vatManagement']['noteCheckoutVatId'];
-
-					$objEmail = new Email();
-
-					// Reminding e-mail to the vendor for manual cheack after salte, only for members
-					if(FE_USER_LOGGED_IN)
-					{
-						$objEmail->subject = $GLOBALS['TL_LANG']['iso_germanize']['mail_reminder_subject'];
-						$objEmail->text    = $GLOBALS['TL_LANG']['iso_germanize']['mail_reminder_text'];
-
-						foreach($arrMailfields as $k=>$v)
-						{
-							$objEmail->subject = str_replace('##'.$k.'##', $v, $objEmail->subject);
-							$objEmail->text    = str_replace('##'.$k.'##', $v, $objEmail->text);
-						}
-
-						$objEmail->sendTo($this->Isotope->Config->email);
-					}
-
-				}
-
-				// Confirm VAT-id in the member data if the main address fits the used one
-				if(FE_USER_LOGGED_IN && $arrCheck['confirmed'] && !$this->relevantModifications($strAddrType, $this->User, true))
-				{
-					$this->Database->prepare("UPDATE tl_member SET vat_no_confirmed=?, vat_no_check=? WHERE id=?")
-						->execute(1,($objEmail->text ? $objEmail->text : $arrCheck['responseData']['original']),$this->User->id);
-				}
-
-				// Set confirmation state in the Isotope object data
-				$this->Input->setPost($strAddrType.'_vat_no_confirmed',$arrCheck['confirmed']);
-				$this->Input->setPost($strAddrType.'_vat_no_check',$arrCheck['response']['original']);
-
-		   	}
+			case 'ok_qualified':
+			case 'nok_qualified':
+			case 'nok_simple':
+				$this->log('VAT-ID '.$this->arrCheckData['vat_no'].' ('.(FE_USER_LOGGED_IN ? 'User '.FrontendUser::getInstance()->id : 'Guest').'): '.$GLOBALS['TL_LANG']['iso_germanize'][$strStatus],'updateVatCheck','VAT-CHECK');
+				break;
+			default:
+				$this->log('VAT-ID '.$this->arrCheckData['vat_no'].' ('.(FE_USER_LOGGED_IN ? 'User '.FrontendUser::getInstance()->id : 'Guest').'): '.$GLOBALS['TL_LANG']['iso_germanize'][$strStatus],'updateVatCheck','ERROR');
+				break;
 		}
-
-		return $arrOptions;
 	}
 
 
-	/*
-	* Checks changes in the VAT-relevat data
-	* @param string
-	* @param mixed
-	* @param boolean
-	* @return boolean
-	*/
-	public function relevantModifications($addrType, $varData, $userData=false)
-	{
-		foreach($GLOBALS['iso_germanize']['relevantData'] as $strRelevant)
+    /**
+     * Update the member data if address and vat_no match the cart version 
+     */
+    protected function updateMember($strStatus)
+    {
+    	if(!FE_USER_LOGGED_IN)
+    	{
+    		return false;
+    	}
+
+		$arrMember = array(
+			FrontendUser::getInstance()->company,
+			FrontendUser::getInstance()->street,
+			FrontendUser::getInstance()->postal,
+			FrontendUser::getInstance()->city,
+			FrontendUser::getInstance()->country
+			);
+		
+		$arrAddress = array(
+			$this->arrCheckData['company'],
+			$this->arrCheckData['street'],
+			$this->arrCheckData['postal'],
+			$this->arrCheckData['city'],
+			$this->arrCheckData['country']
+			);
+
+    	if($arrMember != $arrAddress)
+    	{
+    		return false;
+    	}
+
+		Database::getInstance()->prepare("UPDATE tl_member SET vat_no=?, vat_no_ok=? WHERE id=?")
+			->executeUncached($this->arrCheckData['vat_no'], $strStatus, FrontendUser::getInstance()->id);
+
+   		return true;
+	}
+
+
+    /**
+     * Confirmation mails
+     */
+    protected function sendMails($arrCheck)
+    {
+    	$arrCountries = $this->getCountries();
+
+		$arrMailfields = array(
+			'host'          => self::$strHost,
+			'status'        => $GLOBALS['TL_LANG']['iso_germanize'][$arrCheck['status']],
+			'error'         => $GLOBALS['TL_LANG']['iso_germanize']['error'][$arrCheck['error']],
+			'vat_no'        => $this->arrCheckData['vat_no'],
+			'date'          => date($GLOBALS['TL_CONFIG']['datimFormat'],time()),
+			'company'       => $this->arrCheckData['company'],
+			'street'        => $this->arrCheckData['street'],
+			'postal'        => $this->arrCheckData['postal'],
+			'city'          => $this->arrCheckData['city'],
+			'country'       => $arrCountries[$this->arrCheckData['country']],
+			'member_id'     => (FE_USER_LOGGED_IN ? FrontendUser::getInstance()->id : $GLOBALS['TL_LANG']['iso_germanize']['guest_order']),
+			'address_id'    => (Isotope::getInstance()->Cart->shippingAddress_id > 0 ? Isotope::getInstance()->Cart->shippingAddress_id : ''),
+			'check_date'    => $arrCheck['check_date'],
+			'check_time'    => $arrCheck['check_time'],
+			'check_company' => $arrCheck['check_company'],
+			'check_street'  => $arrCheck['check_street'],
+			'check_postal'  => $arrCheck['check_postal'],
+			'check_city'    => $arrCheck['check_city'],
+			'check_code'    => $arrCheck['check_code']
+			);
+
+		if($arrCheck['status'] == 'ok_qualified' || $arrCheck['status'] == 'nok_qualified')
 		{
-			if($strRelevant == 'street_1' && $userData)
+			$arrMailfields['inactive'] = $arrCheck['status'] == 'nok_qualified' ? $GLOBALS['TL_LANG']['iso_germanize']['inactive'] : '';
+
+			$objEmail          = new Email();
+			$objEmail->subject = $GLOBALS['TL_LANG']['iso_germanize']['mail_verfication_subject'];
+			$objEmail->text    = $GLOBALS['TL_LANG']['iso_germanize']['mail_verfication_text'];
+
+			foreach($arrMailfields as $k=>$v)
 			{
-				$strRelevant == 'street';
+				$objEmail->subject = str_replace('##'.$k.'##', $v, $objEmail->subject);
+				$objEmail->text    = str_replace('##'.$k.'##', $v, $objEmail->text);
 			}
 
-			if(!$userData || $strRelevant == 'street_2' || $strRelevant == 'street_3')
+			$objEmail->sendTo(Isotope::getInstance()->Config->email);
+		}
+		else
+		{
+			$objEmail = new Email();
+
+			// Reminding e-mail to the vendor for manual cheack after salte, only for members
+			if(1==1 || FE_USER_LOGGED_IN)
 			{
-				if($this->Input->post($addrType.'_'.$strRelevant) && $this->Input->post($addrType.'_'.$strRelevant) != (is_object($varData) ? $varData->$strRelevant : $varData[$strRelevant]))
+				$objEmail->subject = $GLOBALS['TL_LANG']['iso_germanize']['mail_reminder_subject'];
+				$objEmail->text    = $GLOBALS['TL_LANG']['iso_germanize']['mail_reminder_text'];
+
+				$objEmail->subject = $GLOBALS['TL_LANG']['iso_germanize']['mail_reminder_subject'];
+				$objEmail->text    = $GLOBALS['TL_LANG']['iso_germanize']['mail_reminder_text'];
+
+				foreach($arrMailfields as $k=>$v)
 				{
-					$hasChanged = true;
+					$objEmail->subject = str_replace('##'.$k.'##', $v, $objEmail->subject);
+					$objEmail->text    = str_replace('##'.$k.'##', $v, $objEmail->text);
 				}
+
+				$objEmail->sendTo(Isotope::getInstance()->Config->email);
 			}
 		}
-
-		return $hasChanged;
 	}
 
 
-	/*
-	* Check the VAT-id formally
-	* @param string
-	* @param string
-	* @return array
-	*/
-	protected function prepareVatNo($strVatNo, $strCheckCountry)
-	{
-		// Filter characters
-		$strVatNo = str_replace(array(
+    /**
+     * Return array with country-code and formally checked number
+     * @return array
+     */
+    public static function preCheckVatNo($strVatNo)
+    {
+    	$strVatNo = str_replace(array(
 			chr(0),
 			chr(9),
 			chr(10),
@@ -820,88 +911,35 @@ class IsotopeGermanize extends IsotopeFrontend
 			','
 			), '', $strVatNo);
 
-		// Country codes from addresses
-		$strCountry = strtoupper(trim(($strCheckCountry=='gr' ? 'el' : $strCheckCountry)));
-
-		// VAT-ids without country codes
-		$strNo = substr($strVatNo,2);
-
-		// Fits to extracted country of the ID?
-		if(strtoupper(substr($strVatNo,0,2)) != $strCountry || strlen($strNo) < 8 || strlen($strNo) > 12)
+		if(strlen($strVatNo) < 8 || strlen($strVatNo) > 12)
 		{
 			return false;
 		}
 
-		return array
-			(
-			'country' => $strCountry,
-			'no'      => $strNo
-			);
+		return $strVatNo;
 	}
 
 
-	/*
-	* Automatic check of the VAT-id
-	* @param array
-	* @return array
-	*/
-	protected function checkVat($arrAddress)
-	{
-		// Pre-check own VAT-id
-		if(!$arrOwn = $this->prepareVatNo($this->Isotope->Config->vat_no, $this->Isotope->Config->country))
+    /**
+     * Return true if an relevant address has been modified
+     * @return bool
+     */
+    protected function addressHasbeenModified()
+    {
+    	if(Input::getInstance()->post('FORM_SUBMIT') != 'iso_mod_checkout_address')
+    	{
+    		return false;
+    	}
+
+		foreach(array('vat_no','company','street_1','postal','city','country') as $strRelevant)
 		{
-			// Log errors
-			$this->log('VAT-ID '.$arrAddress['vat_no'].': '.$GLOBALS['TL_LANG']['iso_germanize']['error']['own_vat_no'],'checkVat','ERROR');
-
-			return false;
-		}
-
-		// Pre-check VAT-id
-		if(!$arrCustomer = $this->prepareVatNo($arrAddress['vat_no'], $arrAddress['country']))
-		{
-			// Log errors
-			$this->log('VAT-ID '.$arrAddress['vat_no'].': '.$GLOBALS['TL_LANG']['iso_germanize']['error']['vat_no'],'checkVat','ERROR');
-
-			return false;
-		}
-
-		$arrAddress['vatNoCountry'] = $arrCustomer['country'];
-		$arrAddress['vatNoNumber']  = $arrCustomer['no'];
-
-		// !HOOK: Check-routines - enables more than one check routine and flexible extension
-		if (isset($GLOBALS['ISO_HOOKS']['checkVatNo']) && is_array($GLOBALS['ISO_HOOKS']['checkVatNo']))
-		{
-			foreach ($GLOBALS['ISO_HOOKS']['checkVatNo'] as $callback)
+			if(Input::getInstance()->post($this->arrCheckData['addr_type'].'_'.$strRelevant) && Input::getInstance()->post($this->arrCheckData['addr_type'].'_'.$strRelevant) != Isotope::getInstance()->Cart->shippingAddress->$strRelevant)
 			{
-				$this->import($callback[0]);
-				$arrReturn = $this->$callback[0]->$callback[1]($this, $arrAddress, $arrOwn);
-
-				if($arrReturn['confirmed'])
-				{
-					return array
-						(
-						'confirmed' => true,
-						'response'  => $arrReturn['response']
-						);
-				}
-				else
-				{
-					// Log errors
-					$this->log('VAT-ID '.$arrAddress['vat_no'].': '.$arrReturn['error'],'checkVat','ERROR');
-
-					// Collect error history, if none of the verfications success
-					$strError .= ($strError ? '
---------------------
-' : '').$arrReturn['error'];
-				}
+				$hasChanged = true;
 			}
 		}
+		
+		return $hasChanged;
+    }
 
-		// No verfication at all
-		return array
-			(
-			'confirmed' => false,
-			'error'     => $strError
-			);
-	}
 }

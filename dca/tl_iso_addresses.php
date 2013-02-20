@@ -18,26 +18,21 @@
  * Modify palettes
  */
 
-$GLOBALS['TL_DCA']['tl_iso_addresses']['palettes']['default'] = str_replace('vat_no','vat_no,vat_no_confirmed,vat_no_check',$GLOBALS['TL_DCA']['tl_iso_addresses']['palettes']['default']);
+$GLOBALS['TL_DCA']['tl_iso_addresses']['palettes']['default'] = str_replace('vat_no','vat_no,vat_no_ok',$GLOBALS['TL_DCA']['tl_iso_addresses']['palettes']['default']);
 
 
 /**
  * Add fields
  */
 
-$GLOBALS['TL_DCA']['tl_iso_addresses']['fields']['vat_no_confirmed'] = array
+$GLOBALS['TL_DCA']['tl_iso_addresses']['fields']['vat_no_ok'] = array
 (
-	'label'					=> &$GLOBALS['TL_LANG']['tl_iso_addresses']['vat_no_confirmed'],
+	'label'					=> &$GLOBALS['TL_LANG']['tl_iso_addresses']['vat_no_ok'],
 	'exclude'				=> true,
 	'filter'				=> true,
-	'inputType'				=> (TL_MODE=='BE' ? 'checkbox':'hidden'),
+	'inputType'				=> (TL_MODE=='BE' ? 'select':'hidden'),
+	'options'				=> array('nok', 'nok_invalid', 'nok_simple', 'nok_qualified', 'ok_qualified', 'ok_manual'),
+	'reference'				=> &$GLOBALS['TL_LANG']['tl_iso_addresses'],
+	'default'				=> 'nok',
 	'eval'					=> array('feEditable'=>true, 'feViewable'=>true, 'feGroup'=>'personal', 'tl_class'=>'w50 m12')
-);
-
-$GLOBALS['TL_DCA']['tl_iso_addresses']['fields']['vat_no_check'] = array
-(
-	'label'					=> &$GLOBALS['TL_LANG']['tl_iso_addresses']['vat_no_check'],
-	'exclude'				=> true,
-	'inputType'				=> (TL_MODE=='BE' ? 'textarea':'hidden'),
-	'eval'					=> array('feEditable'=>true, 'feViewable'=>true, 'feGroup'=>'personal', 'tl_class'=>'clr long')
 );

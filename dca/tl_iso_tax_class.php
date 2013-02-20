@@ -51,9 +51,6 @@ $GLOBALS['TL_DCA']['tl_iso_tax_class']['fields']['germanize_rate'] = array
 (
     'label'         => &$GLOBALS['TL_LANG']['tl_iso_tax_class']['germanize_rate'],
     'exclude'       => true,
-    'defualt'       => 'regular',
-    'inputType'     => 'radio',
-    'options'       => array('regular', 'reduced', 'excempted'),
-    'reference'     => &$GLOBALS['TL_LANG']['tl_iso_tax_class'],
-    'eval'          => array('mandatory'=>true, 'tl_class'=>'w50'),
+    'inputType'     => 'text',
+    'eval'          => array('rgxp'=>digit, 'mandatory'=>true, 'tl_class'=>'w50'),
 );

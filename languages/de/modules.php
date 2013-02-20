@@ -13,8 +13,5 @@
  * @filesource
  */
 
-/**
- * Fields
- */
 
-$GLOBALS['TL_LANG']['tl_iso_tax_rate']['excludeFromVatHandling'] = array('Keine MwSt.-Behandlung','Diese Steuer wird bei der erweiterten MwSt.-Behandlung ignoriert.');
+$GLOBALS['TL_LANG']['MOD']['isotope_germanize'][0] = 'Isotope eCommerce: Deutsche Shops';

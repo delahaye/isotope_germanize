@@ -30,18 +30,15 @@
 /**
  * Fields
  */
-$GLOBALS['TL_LANG']['tl_iso_tax_class']['germanize_price']  = array('Preis-Eingabe', 'Wählen Sie ob Produktpreise inkl. oder exkl. Steuer sind.');
-$GLOBALS['TL_LANG']['tl_iso_tax_class']['germanize_rate']  = array('Steuersatz', 'Wählen Sie den Steuersatz für Produkte dieser Klasse.');
+$GLOBALS['TL_LANG']['tl_iso_tax_class']['germanize_price']        = array('Preis-Eingabe', 'Wählen Sie ob die eingegebenen Produktpreise inkl. oder exkl. Steuer sind.');
+$GLOBALS['TL_LANG']['tl_iso_tax_class']['germanize_rate']         = array('Steuersatz in %', 'Geben Sie den Steuersatz für Produkte dieser Klasse ein.');
 
 
 /**
  * References
  */
-$GLOBALS['TL_LANG']['tl_iso_tax_class']['gross']  = 'Brutto';
-$GLOBALS['TL_LANG']['tl_iso_tax_class']['net']  = 'Netto';
-$GLOBALS['TL_LANG']['tl_iso_tax_class']['regular']  = 'Standard (19%)';
-$GLOBALS['TL_LANG']['tl_iso_tax_class']['reduced']  = 'Reduziert (7%)';
-$GLOBALS['TL_LANG']['tl_iso_tax_class']['excepted']  = 'Befreit (0%)';
+$GLOBALS['TL_LANG']['tl_iso_tax_class']['gross']    = 'Brutto';
+$GLOBALS['TL_LANG']['tl_iso_tax_class']['net']      = 'Netto';
 
 
 /**

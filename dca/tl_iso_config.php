@@ -18,12 +18,10 @@
  * Modify palettes
  */
 $GLOBALS['TL_DCA']['tl_iso_config']['palettes']['__selector__'][] = 'germanize';
-$GLOBALS['TL_DCA']['tl_iso_config']['palettes']['__selector__'][] = 'onlyMemberVatCheck';
 
 $GLOBALS['TL_DCA']['tl_iso_config']['palettes']['default'] .= ';{germanize_legend:hide},germanize';
 
-$GLOBALS['TL_DCA']['tl_iso_config']['subpalettes']['germanize'] .= 'pageShipping,shippingRel,shippingTarget,shippingNote,checkoutPages,netPriceGroups,manualVatCheck,onlyMemberVatCheck';
-$GLOBALS['TL_DCA']['tl_iso_config']['subpalettes']['onlyMemberVatCheck'] .= 'groupsVatCheck';
+$GLOBALS['TL_DCA']['tl_iso_config']['subpalettes']['germanize'] .= 'shipping_page,shipping_rel,shipping_target,shipping_note,checkout_pages,netprice_groups,vatcheck_guests,vatcheck_member,vatcheck_groups';
 
 
 /**
@@ -37,75 +35,74 @@ $GLOBALS['TL_DCA']['tl_iso_config']['fields']['germanize'] = array
 	'eval'                    => array('submitOnChange'=>true, 'tl_class'=>'clr')
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shippingNote'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shipping_note'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shippingNote'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shipping_note'],
 	'exclude'                 => true,
 	'inputType'               => 'select',
 	'options_callback'        => array('tl_iso_config_germanize', 'getArticleAlias'),
-	'eval'                    => array('mandatory'=>false, 'tl_class'=>'clr')
+	'eval'                    => array('includeBlankOption'=>true,'mandatory'=>false, 'tl_class'=>'clr')
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['pageShipping'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shipping_page'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['pageShipping'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shipping_page'],
 	'exclude'                 => true,
 	'inputType'               => 'pageTree',
 	'eval'                    => array('fieldType'=>'radio')
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shippingTarget'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shipping_target'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shippingTarget'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shipping_target'],
 	'exclude'                 => true,
 	'inputType'               => 'checkbox',
 	'eval'                    => array('tl_class'=>'w50 m12')
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shippingRel'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['shipping_rel'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shippingRel'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['shipping_rel'],
 	'exclude'                 => true,
 	'search'                  => true,
 	'inputType'               => 'text',
 	'eval'                    => array('maxlength'=>64, 'tl_class'=>'w50')
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['checkoutPages'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['checkout_pages'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['checkoutPages'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['checkout_pages'],
 	'exclude'                 => true,
 	'inputType'               => 'pageTree',
 	'eval'                    => array('fieldType'=>'checkbox')
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['netPriceGroups'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['netprice_groups'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['netPriceGroups'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['netprice_groups'],
 	'exclude'                 => true,
 	'inputType'               => 'checkbox',
 	'foreignKey'              => 'tl_member_group.name',
-	'eval'                    => array('multiple'=>true, 'tl_class'=>'clr'),
+	'eval'                    => array('multiple'=>true, 'tl_class'=>'clr')
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['manualVatCheck'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['vatcheck_guests'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['manualVatCheck'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['vatcheck_guests'],
 	'exclude'                 => true,
 	'inputType'               => 'checkbox'
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['onlyMemberVatCheck'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['vatcheck_member'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['onlyMemberVatCheck'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['vatcheck_member'],
 	'exclude'                 => true,
-	'inputType'               => 'checkbox',
-	'eval'                    => array('submitOnChange'=>true)
+	'inputType'               => 'checkbox'
 );
 
-$GLOBALS['TL_DCA']['tl_iso_config']['fields']['groupsVatCheck'] = array
+$GLOBALS['TL_DCA']['tl_iso_config']['fields']['vatcheck_groups'] = array
 (
-	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['groupsVatCheck'],
+	'label'                   => &$GLOBALS['TL_LANG']['tl_iso_config']['vatcheck_groups'],
 	'exclude'                 => true,
 	'filter'                  => true,
 	'inputType'               => 'checkboxWizard',

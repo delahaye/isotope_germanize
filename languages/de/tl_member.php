@@ -17,6 +17,12 @@
  * Fields
  */
 
-$GLOBALS['TL_LANG']['tl_member']['vat_no']              = array('Ust-ID Nr.','Bitte geben Sie ihre Umsatzsteuer-ID Nummer ein.');
-$GLOBALS['TL_LANG']['tl_member']['vat_no_confirmed']    = array('USt-ID Nr. bestätigt','Die USt-ID Nr. wurde bestätigt und berechtigt zum Steuerabzug.');
-$GLOBALS['TL_LANG']['tl_member']['vat_no_check']        = array('USt-ID Nr. Bestätigungsdaten','Hier wird die automatische Rückmeldung der Online-Bestätigung gespeichert.');
+$GLOBALS['TL_LANG']['tl_member']['vat_no']    = array('Ust-ID Nr.','Bitte geben Sie ihre Umsatzsteuer-ID Nummer ein.');
+$GLOBALS['TL_LANG']['tl_member']['vat_no_ok'] = array('Status der USt-ID Nr.','Die USt-ID Nr. wurde ggf. bestätigt und berechtigt dann zum Steuerabzug.');
+
+$GLOBALS['TL_LANG']['tl_member']['nok']            = 'nicht freigeschaltet - ungeprüft';
+$GLOBALS['TL_LANG']['tl_member']['nok_invalid']    = 'nicht freigeschaltet - nicht verfizierbar';
+$GLOBALS['TL_LANG']['tl_member']['nok_simple']     = 'nicht freigeschaltet - gültig';
+$GLOBALS['TL_LANG']['tl_member']['nok_qualified']  = 'nicht freigeschaltet - verifiziert';
+$GLOBALS['TL_LANG']['tl_member']['ok_qualified']   = 'automatisch freigeschaltet';
+$GLOBALS['TL_LANG']['tl_member']['ok_manual']      = 'manuell freigeschaltet';
