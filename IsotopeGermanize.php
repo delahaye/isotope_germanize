@@ -338,6 +338,11 @@ class IsotopeGermanize extends IsotopeFrontend
 	 */
 	public function injectNotes($strBuffer, $strTemplate)
 	{
+        // Use only if the shop is defined as German
+        if (!IsotopeGermanize::isActive()) {
+            return $strBuffer;
+        }
+
 		switch($strTemplate)
 		{
 			case 'iso_list_default':
@@ -400,6 +405,11 @@ class IsotopeGermanize extends IsotopeFrontend
 	 */
 	public function isotopeGermanizeInsertTags($strTag)
 	{
+        // Use only if the shop is defined as German
+        if (!IsotopeGermanize::isActive()) {
+            return $strTag;
+        }
+
 		$arrTag = trimsplit('::', $strTag);
 
 		if($arrTag[0] == 'isotopeGerman')
