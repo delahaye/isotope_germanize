@@ -77,6 +77,9 @@ Insert-Tags
 
   {{isotopeGerman::notePricing::1::true}} : baut die %-Angabe der Steuerklasse ID 1 ein, kennzeichnet als Nicht-Versandprodukt
   
+Das Einfügen von {{isotopeGerman::notePricing::<?php echo $this->raw['tax_class']; ?>}} in das Produkt-Template iso_reader_default.html5
+fügt also den Preis-Hinweis mit der für dieses Produkt geltenden Steuer- und Versandoption in die Website ein.
+
 
 Automatische Insert-Tags: 
 ---------
