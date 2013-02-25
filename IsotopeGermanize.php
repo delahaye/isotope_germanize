@@ -524,7 +524,7 @@ class IsotopeGermanize extends IsotopeFrontend
     {
         global $objPage;
 
-		if(Isotope::getInstance()->Config->pageShipping)
+		if(Isotope::getInstance()->Config->shipping_page < 1)
 		{
 			return false;
 		}
