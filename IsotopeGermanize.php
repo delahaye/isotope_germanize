@@ -417,14 +417,14 @@ class IsotopeGermanize extends IsotopeFrontend
 			switch($arrTag[1])
 			{
 				case 'noteShipping':
-					return self::getShippingNotice();
+					return '<div class="noteShipping">'.self::getShippingNotice().'</div>';
 					break;
 				case 'notePricing':
 					// [2]: # tax class, [3]: shipping exempt, [4]: txt for text version
-					return $this->getPriceNotice($arrTag[2], $arrTag[3], $arrTag[4]);
+					return '<div class="notePricing">'.$this->getPriceNotice($arrTag[2], $arrTag[3], $arrTag[4]).'</div>';
 					break;
 				case 'noteVat':
-					return self::getTaxNotice();
+					return '<div class="noteVat">'.self::getTaxNotice().'</div>';
 					break;
 			}
 		}
