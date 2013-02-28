@@ -182,6 +182,12 @@ class IsotopeGermanize extends IsotopeFrontend
      */
     public static function hasValidVatNo()
     {
+		// in test mode we always have a valif vat no
+		if($GLOBALS['isotope_germanize']['testmode'])
+		{
+	        return true;
+		}
+		
         if (!self::hasVatNo() 
         	|| (FE_USER_LOGGED_IN !== true && !Isotope::getInstance()->Config->vatcheck_guests)
         	|| (Isotope::getInstance()->Cart->shippingAddress->vat_no_ok != 'ok_qualified' && Isotope::getInstance()->Cart->shippingAddress->vat_no_ok != 'ok_manual')) {
