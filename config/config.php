@@ -35,3 +35,4 @@ array_insert($GLOBALS['ISO_CHECKOUT_STEPS']['address'], 0, array(array('IsotopeG
 $GLOBALS['ISO_HOOKS']['calculateTax'][]         = array('IsotopeGermanize', 'calculateTax');
 $GLOBALS['TL_HOOKS']['parseFrontendTemplate'][] = array('IsotopeGermanize', 'injectNotes');
 $GLOBALS['TL_HOOKS']['replaceInsertTags'][]     = array('IsotopeGermanize', 'isotopeGermanizeInsertTags');
+$GLOBALS['ISO_HOOKS']['getOrderEmailData'][]    = array('IsotopeGermanize', 'isotopeGermanizeOrderEmailData'); 

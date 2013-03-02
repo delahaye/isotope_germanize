@@ -957,5 +957,21 @@ class IsotopeGermanize extends IsotopeFrontend
 		
 		return $hasChanged;
     }
+    
+    /**
+	 * Inject data via mail tags
+	 * @param string
+	 * @return string
+	 */
+	public function isotopeGermanizeOrderEmailData(IsotopeOrder $objOrder, $arrData)
+	{
+		return = array_merge($arrData, array
+		(
+			'germ_shipping_note'		=> Isotope::getInstance()->Config->shipping_note,
+			'germ_shipping_page'		=> $this->getShippingLink(),
+			'germ_vat_no_ok'			=> Isotope::getInstance()->Cart->shippingAddress->vat_no_ok,
+			'germ_vat_no'				=> $this->arrCheckData['vat_no'],
+		));
+	}
 
 }
