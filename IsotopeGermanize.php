@@ -434,6 +434,8 @@ class IsotopeGermanize extends IsotopeFrontend
 					break;
 			}
 		}
+
+		return false;
 	}
 
 

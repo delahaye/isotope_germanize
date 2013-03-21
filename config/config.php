@@ -18,6 +18,7 @@
  * Settings
  */
 $GLOBALS['isotope_germanize']['testmode'] = false; // true always verifies the VAT id. Only for testing!
+
 $GLOBALS['isotope_germanize']['order_printed_verification'] = false; // auto-order a print document at the German authorities (beware in test cases!!)
 $GLOBALS['isotope_germanize']['loose_verification_street']  = false; // state a verfication as 'qualified' even if the street is not verified
 $GLOBALS['isotope_germanize']['loose_verification_postal']  = false; // state a verfication as 'qualified' even if the postal is not verified
