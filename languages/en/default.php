@@ -18,28 +18,28 @@
  * Order button
  */
 
-$GLOBALS['TL_LANG']['MSC']['confirmOrder']                          = 'Kaufen';
+$GLOBALS['TL_LANG']['MSC']['confirmOrder']                          = 'Order';
 
 
 /**
  * Notes at the products, in the cart etc
  */
 
-$GLOBALS['TL_LANG']['iso_germanize']['vatCart']['gross']            = 'enthaltene MwSt.';
-$GLOBALS['TL_LANG']['iso_germanize']['vatCart']['net']              = 'zzgl. MwSt.';
+$GLOBALS['TL_LANG']['iso_germanize']['vatCart']['gross']            = 'incl. VAT';
+$GLOBALS['TL_LANG']['iso_germanize']['vatCart']['net']              = 'plus VAT';
 
-$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['gross_shipping']     = 'inkl. %sMwSt. zzgl. <a>Versand</a>';
-$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['gross_noShipping']   = 'inkl. %sMwSt., kein Versandartikel';
-$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['net_shipping']       = 'zzgl. %sMwSt. zzgl. <a>Versand</a>';
-$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['net_noShipping']     = 'zzgl. %sMwSt., kein Versandartikel';
-$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['taxfree_shipping']   = 'zzgl. <a>Versand</a>';
-$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['taxfree_noShipping'] = 'kein Versandartikel';
+$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['gross_shipping']     = 'incl. %sVAT plus <a>Shipping</a>';
+$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['gross_noShipping']   = 'incl. %sMVAT, no shipping article';
+$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['net_shipping']       = 'plus %sVAT plus <a>shipping</a>';
+$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['net_noShipping']     = 'plus %sVAT, no shipping article';
+$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['taxfree_shipping']   = 'plus <a>Shipping</a>';
+$GLOBALS['TL_LANG']['iso_germanize']['priceNotes']['taxfree_noShipping'] = 'no shipping article';
 
-$GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEuGuest']        = 'Die Preise werden unabhängig vom Lieferland %s inkl. MwSt. angezeigt. Bei Lieferung in nicht-EU-Länder wird diese in der Bestellübersicht nicht berücksichtigt.';
-$GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEu']             = 'Als Lieferung an einen Leistungsempfänger in dem nicht-EU-Land %s ist der Umsatz nicht steuerbar. Es wird daher keine MwSt. berechnet.';
-$GLOBALS['TL_LANG']['iso_germanize']['notes']['confirmedVatNo']    = 'Die USt.-Id %s ist bestätigt. Der Leistungsempfänger entspricht der Lieferadresse, daher wird bei dieser innergemeinschaftlichen Leistung keine MwSt in Rechnung gestellt.';
-$GLOBALS['TL_LANG']['iso_germanize']['notes']['unconfirmedVatNo']  = 'Die USt.-Id %s wurde bisher leider noch nicht bestätigt. Daher wird unabhängig davon in das Lieferland %s inkl. MwSt. berechnet.';
-$GLOBALS['TL_LANG']['iso_germanize']['notes']['noVatNo']           = 'Die Preise werden unabhängig vom Lieferland %s inkl. MwSt. angezeigt. Geben Sie bei der Bestellung eine gültige USt.-Id. an, wird entsprechend einer innergemeinschaftlichen Leistung keine MwSt in Rechnung gestellt.';
+$GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEuGuest']        = 'The prices shown are incl. VAT irrespective of the country of delivery %s. In case of delivery within non-EU-Countries this will not be considered in the order form.';
+$GLOBALS['TL_LANG']['iso_germanize']['notes']['nonEu']             = 'Will the shipping address be in a non EU-country %s the sale will not be taxed. Therefore no VAT will be charged.';
+$GLOBALS['TL_LANG']['iso_germanize']['notes']['confirmedVatNo']    = 'VAT identification number %s is confirmed. The consignee corresponds to the address of delivery, therefore no VAT will be charged for the intra-community supply.';
+$GLOBALS['TL_LANG']['iso_germanize']['notes']['unconfirmedVatNo']  = 'Unfortunately the VAT identification number %s is not confirmed yet. Therefore VAT will be charged irrespective of the country of delivery %s.';
+$GLOBALS['TL_LANG']['iso_germanize']['notes']['noVatNo']           = 'The prices shown are including VAT, this is irrespective of the country of delivery %s. If you indicate a valid value added tax identification number within your order, there will not be charged any VAT accordingly an intra-community supply.';
 
 /**
  * VAT-Id check legends
